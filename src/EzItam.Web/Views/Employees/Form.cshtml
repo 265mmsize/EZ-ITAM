@@ -1,5 +1,5 @@
 @model EmployeeDto
-@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "사원 등록" : "사원 수정"; }
+@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? L["사원 등록"] : L["사원 수정"]; }
 <partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
 <div class="card" style="max-width:560px"><div class="card-body">
     <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? null : Model.Id)" method="post" data-once>
@@ -10,13 +10,13 @@
             <div class="col-6 mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
         </div>
         <div class="row">
-            <div class="col-6 mb-3"><label asp-for="DepartmentId" class="form-label"></label><select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments"><option value="">-- 미지정 --</option></select></div>
+            <div class="col-6 mb-3"><label asp-for="DepartmentId" class="form-label"></label><select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments"><option value="">@L["-- 미지정 --"]</option></select></div>
             <div class="col-6 mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /></div>
         </div>
         <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
         <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
-        <button type="submit" class="btn btn-primary">저장</button>
-        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+        <button type="submit" class="btn btn-primary">@L["저장"]</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">@L["취소"]</a>
     </form>
 </div></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

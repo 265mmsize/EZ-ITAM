@@ -1,5 +1,5 @@
 @model LocationDto
-@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "위치 등록" : "위치 수정"; }
+@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? L["위치 등록"] : L["위치 수정"]; }
 <partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
 <div class="card" style="max-width:560px"><div class="card-body">
     <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? null : Model.Id)" method="post" data-once>
@@ -12,8 +12,8 @@
             <div class="col-4 mb-3"><label asp-for="Room" class="form-label"></label><input asp-for="Room" class="form-control" /></div>
         </div>
         <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
-        <button type="submit" class="btn btn-primary">저장</button>
-        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+        <button type="submit" class="btn btn-primary">@L["저장"]</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">@L["취소"]</a>
     </form>
 </div></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

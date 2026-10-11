@@ -1,6 +1,6 @@
 @model MaintenanceDto
-@{ ViewData["Title"] = "유지보수 등록"; AssetDto asset = ViewBag.Asset; }
-<partial name="_PageHeader" model="@($"유지보수 등록 - {asset.AssetTag} {asset.Name}")" />
+@{ ViewData["Title"] = L["유지보수 등록"]; AssetDto asset = ViewBag.Asset; }
+<partial name="_PageHeader" model="@(L["유지보수 등록 - {0} {1}", asset.AssetTag, asset.Name].Value)" />
 <div class="card" style="max-width:640px"><div class="card-body">
     <form asp-action="Create" method="post" data-once>
         <partial name="_Form" model="Model" />
@@ -8,11 +8,11 @@
         {
             <div class="form-check mb-3">
                 <input type="checkbox" class="form-check-input" id="setInRepair" name="setInRepair" value="true" checked />
-                <label class="form-check-label" for="setInRepair">미완료 시 자산 상태를 '수리중'으로 변경</label>
+                <label class="form-check-label" for="setInRepair">@L["미완료 시 자산 상태를 '수리중'으로 변경"]</label>
             </div>
         }
-        <button type="submit" class="btn btn-primary">등록</button>
-        <a class="btn btn-outline-secondary" asp-controller="Assets" asp-action="Details" asp-route-id="@asset.Id">취소</a>
+        <button type="submit" class="btn btn-primary">@L["등록"]</button>
+        <a class="btn btn-outline-secondary" asp-controller="Assets" asp-action="Details" asp-route-id="@asset.Id">@L["취소"]</a>
     </form>
 </div></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

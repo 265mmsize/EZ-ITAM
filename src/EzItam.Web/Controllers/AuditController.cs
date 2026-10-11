@@ -1,10 +1,12 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 
 namespace EzItam.Web.Controllers;
 
 public class AuditController : BaseController
 {
-    public AuditController(ItamApiClient api) : base(api) { }
+    public AuditController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index(string? entity, string? user, DateTime? from, DateTime? to, int page = 1)
     {

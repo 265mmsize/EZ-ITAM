@@ -1,5 +1,5 @@
 @model DashboardDto
-@{ ViewData["Title"] = "대시보드"; }
+@{ ViewData["Title"] = L["대시보드"]; }
 <partial name="_PageHeader" model="@L["dash.title"].Value" />
 
 <div class="row g-3 mb-3">
@@ -7,21 +7,21 @@
         <div class="card stat-card"><div class="card-body">
             <div class="stat-label">@L["dash.total_assets"]</div>
             <div class="stat-value">@Model.TotalAssets.ToString("#,##0")</div>
-            <div class="small text-muted">취득가 합계 @Model.TotalPurchaseValue.Money()</div>
+            <div class="small text-muted">@L["취득가 합계 {0}", Model.TotalPurchaseValue.Money()]</div>
         </div></div>
     </div>
     <div class="col-6 col-lg-3">
         <div class="card stat-card"><div class="card-body">
             <div class="stat-label">@L["dash.in_use"]</div>
             <div class="stat-value text-primary">@Model.AssignedAssets.ToString("#,##0")</div>
-            <div class="small text-muted">재고/유휴 @Model.InStockAssets · 수리중 @Model.InRepairAssets · 불용 이상 @Model.RetiredAssets</div>
+            <div class="small text-muted">@L["재고/유휴 {0} · 수리중 {1} · 불용 이상 {2}", Model.InStockAssets, Model.InRepairAssets, Model.RetiredAssets]</div>
         </div></div>
     </div>
     <div class="col-6 col-lg-3">
         <div class="card stat-card"><div class="card-body">
             <div class="stat-label">@L["dash.warranty_soon"]</div>
             <div class="stat-value text-warning">@Model.WarrantyExpiringCount</div>
-            <div class="small text-muted">이미 만료 @Model.WarrantyExpiredCount 건</div>
+            <div class="small text-muted">@L["이미 만료 {0} 건", Model.WarrantyExpiredCount]</div>
         </div></div>
     </div>
     <div class="col-6 col-lg-3">
@@ -29,9 +29,9 @@
             <div class="stat-label">@L["dash.licenses"]</div>
             <div class="stat-value">@Model.TotalLicenses</div>
             <div class="small text-muted">
-                만료 임박 @Model.LicensesExpiringCount
-                @if (Model.LicensesOverAllocated > 0) { <span class="text-danger"> · 초과 할당 @Model.LicensesOverAllocated</span> }
-                · 미완료 유지보수 @Model.OpenMaintenanceCount
+                @L["만료 임박 {0}", Model.LicensesExpiringCount]
+                @if (Model.LicensesOverAllocated > 0) { <span class="text-danger">@L["· 초과 할당 {0}", Model.LicensesOverAllocated]</span> }
+                @L["· 미완료 유지보수 {0}", Model.OpenMaintenanceCount]
             </div>
         </div></div>
     </div>
@@ -50,7 +50,7 @@
                         <div class="bar"><span style="width:@(100 * c.Value / maxCat)%"></span></div>
                     </div>
                 }
-                @if (Model.ByCategory.Count == 0) { <div class="text-muted">등록된 자산이 없습니다.</div> }
+                @if (Model.ByCategory.Count == 0) { <div class="text-muted">@L["등록된 자산이 없습니다."]</div> }
             </div>
         </div>
     </div>
@@ -79,7 +79,7 @@
                         <div class="bar"><span style="width:@(100 * d.Value / maxDep)%; background:#059669"></span></div>
                     </div>
                 }
-                @if (Model.ByDepartment.Count == 0) { <div class="text-muted">사용중인 자산이 없습니다.</div> }
+                @if (Model.ByDepartment.Count == 0) { <div class="text-muted">@L["사용중인 자산이 없습니다."]</div> }
             </div>
         </div>
     </div>
@@ -90,10 +90,10 @@
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between">
                 <span>@L["dash.warranty_list"]</span>
-                <a class="small" asp-controller="Assets" asp-action="Index" asp-route-warrantyExpiringOnly="true">전체 보기</a>
+                <a class="small" asp-controller="Assets" asp-action="Index" asp-route-warrantyExpiringOnly="true">@L["전체 보기"]</a>
             </div>
             <table class="table table-sm table-hover mb-0">
-                <thead><tr><th>자산번호</th><th>자산명</th><th>사용자</th><th>만료일</th></tr></thead>
+                <thead><tr><th>@L["자산번호"]</th><th>@L["자산명"]</th><th>@L["사용자"]</th><th>@L["만료일"]</th></tr></thead>
                 <tbody>
                 @foreach (var a in Model.WarrantyExpiring)
                 {
@@ -104,7 +104,7 @@
                         <td class="text-warning">@a.WarrantyExpiry.Ymd()</td>
                     </tr>
                 }
-                @if (Model.WarrantyExpiring.Count == 0) { <tr><td colspan="4" class="text-muted">해당 없음</td></tr> }
+                @if (Model.WarrantyExpiring.Count == 0) { <tr><td colspan="4" class="text-muted">@L["해당 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>
@@ -113,10 +113,10 @@
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between">
                 <span>@L["dash.license_list"]</span>
-                <a class="small" asp-controller="Licenses" asp-action="Index" asp-route-expiringOnly="true">전체 보기</a>
+                <a class="small" asp-controller="Licenses" asp-action="Index" asp-route-expiringOnly="true">@L["전체 보기"]</a>
             </div>
             <table class="table table-sm table-hover mb-0">
-                <thead><tr><th>소프트웨어</th><th>유형</th><th>사용/보유</th><th>만료일</th></tr></thead>
+                <thead><tr><th>@L["소프트웨어"]</th><th>@L["유형"]</th><th>@L["사용/보유"]</th><th>@L["만료일"]</th></tr></thead>
                 <tbody>
                 @foreach (var l in Model.LicensesExpiring)
                 {
@@ -127,7 +127,7 @@
                         <td class="text-warning">@l.ExpiryDate.Ymd()</td>
                     </tr>
                 }
-                @if (Model.LicensesExpiring.Count == 0) { <tr><td colspan="4" class="text-muted">해당 없음</td></tr> }
+                @if (Model.LicensesExpiring.Count == 0) { <tr><td colspan="4" class="text-muted">@L["해당 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>
@@ -136,7 +136,7 @@
         <div class="card h-100">
             <div class="card-header">@L["dash.recent"]</div>
             <table class="table table-sm table-hover mb-0">
-                <thead><tr><th>자산</th><th>사용자</th><th>불출</th><th>반납</th></tr></thead>
+                <thead><tr><th>@L["자산"]</th><th>@L["사용자"]</th><th>@L["불출"]</th><th>@L["반납"]</th></tr></thead>
                 <tbody>
                 @foreach (var x in Model.RecentAssignments)
                 {
@@ -144,10 +144,10 @@
                         <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@x.AssetId">@x.Asset?.AssetTag</a> <span class="text-muted small">@x.Asset?.Name</span></td>
                         <td>@x.Employee?.Name</td>
                         <td>@x.AssignedAt.Ymd()</td>
-                        <td>@(x.ReturnedAt.HasValue ? x.ReturnedAt.Ymd() : "<사용중>")</td>
+                        <td>@(x.ReturnedAt.HasValue ? x.ReturnedAt.Ymd() : L["<사용중>"])</td>
                     </tr>
                 }
-                @if (Model.RecentAssignments.Count == 0) { <tr><td colspan="4" class="text-muted">이력 없음</td></tr> }
+                @if (Model.RecentAssignments.Count == 0) { <tr><td colspan="4" class="text-muted">@L["이력 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>
@@ -156,10 +156,10 @@
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between">
                 <span>@L["dash.open_maint"]</span>
-                <a class="small" asp-controller="Maintenance" asp-action="Index" asp-route-openOnly="true">전체 보기</a>
+                <a class="small" asp-controller="Maintenance" asp-action="Index" asp-route-openOnly="true">@L["전체 보기"]</a>
             </div>
             <table class="table table-sm table-hover mb-0">
-                <thead><tr><th>자산</th><th>유형</th><th>내용</th><th>작업일</th></tr></thead>
+                <thead><tr><th>@L["자산"]</th><th>@L["유형"]</th><th>@L["내용"]</th><th>@L["작업일"]</th></tr></thead>
                 <tbody>
                 @foreach (var m in Model.OpenMaintenance)
                 {
@@ -170,7 +170,7 @@
                         <td>@m.Date.Ymd()</td>
                     </tr>
                 }
-                @if (Model.OpenMaintenance.Count == 0) { <tr><td colspan="4" class="text-muted">해당 없음</td></tr> }
+                @if (Model.OpenMaintenance.Count == 0) { <tr><td colspan="4" class="text-muted">@L["해당 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>

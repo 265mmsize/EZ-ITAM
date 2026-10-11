@@ -1,11 +1,11 @@
 @model List<DepartmentDto>
-@{ ViewData["Title"] = "부서"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
+@{ ViewData["Title"] = L["부서"]; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">부서</h1>
-    @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 부서 등록</a> }
+    <h1 class="h4 mb-0">@L["부서"]</h1>
+    @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">@L["+ 부서 등록"]</a> }
 </div>
 <div class="card"><table class="table table-sm table-hover mb-0">
-    <thead class="table-light"><tr><th>부서코드</th><th>부서명</th><th>사용</th><th>사원 수</th>@if (canEdit) { <th></th> }</tr></thead>
+    <thead class="table-light"><tr><th>@L["부서코드"]</th><th>@L["부서명"]</th><th>@L["사용"]</th><th>@L["사원 수"]</th>@if (canEdit) { <th></th> }</tr></thead>
     <tbody>
     @foreach (var d in Model)
     {
@@ -15,7 +15,7 @@
             @if (canEdit)
             {
                 <td class="w-1">
-                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@d.Id">수정</a>
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@d.Id">@L["수정"]</a>
                     @if (isAdmin && d.Employees.Count == 0) { <partial name="_ConfirmDelete" model="@(("Departments", (object)d.Id, d.Name))" /> }
                 </td>
             }

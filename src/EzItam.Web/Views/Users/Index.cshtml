@@ -1,20 +1,20 @@
 @model List<UserDto>
-@{ ViewData["Title"] = "사용자 관리"; }
+@{ ViewData["Title"] = L["사용자 관리"]; }
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">사용자 관리</h1>
-    <a class="btn btn-primary btn-sm" asp-action="Create">+ 사용자 추가</a>
+    <h1 class="h4 mb-0">@L["사용자 관리"]</h1>
+    <a class="btn btn-primary btn-sm" asp-action="Create">@L["+ 사용자 추가"]</a>
 </div>
 <div class="card"><table class="table table-sm table-hover mb-0">
-    <thead class="table-light"><tr><th>아이디</th><th>이메일</th><th>권한</th><th>상태</th><th></th></tr></thead>
+    <thead class="table-light"><tr><th>@L["아이디"]</th><th>@L["이메일"]</th><th>@L["권한"]</th><th>@L["상태"]</th><th></th></tr></thead>
     <tbody>
     @foreach (var u in Model)
     {
         <tr>
             <td><strong>@u.UserName</strong></td><td>@u.Email</td><td>@string.Join(", ", u.Roles)</td>
-            <td>@if (u.IsLockedOut) { <span class="badge bg-danger">잠김</span> } else { <span class="badge bg-success">정상</span> }</td>
+            <td>@if (u.IsLockedOut) { <span class="badge bg-danger">@L["잠김"]</span> } else { <span class="badge bg-success">@L["정상"]</span> }</td>
             <td class="w-1 d-flex gap-1">
-                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@u.Id">수정</a>
-                @if (u.IsLockedOut) { <form asp-action="Unlock" asp-route-id="@u.Id" method="post">@Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-warning">잠금해제</button></form> }
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@u.Id">@L["수정"]</a>
+                @if (u.IsLockedOut) { <form asp-action="Unlock" asp-route-id="@u.Id" method="post">@Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-warning">@L["잠금해제"]</button></form> }
                 <partial name="_ConfirmDelete" model="@(("Users", (object)u.Id, u.UserName))" />
             </td>
         </tr>

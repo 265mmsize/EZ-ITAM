@@ -25,11 +25,11 @@
     </div>
     <div class="col-6 mb-3">
         <label asp-for="VendorId" class="form-label"></label>
-        <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">-- 자체 처리 --</option></select>
+        <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">@L["-- 자체 처리 --"]</option></select>
     </div>
 </div>
 <div class="mb-3">
     <label asp-for="CompletedAt" class="form-label"></label>
     <input asp-for="CompletedAt" class="form-control" type="date" />
-    <div class="form-text">완료일을 비워두면 '진행중'으로 관리됩니다.</div>
+    <div class="form-text">@L["완료일을 비워두면 '진행중'으로 관리됩니다."]</div>
 </div>

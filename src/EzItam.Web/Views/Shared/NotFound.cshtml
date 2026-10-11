@@ -1,6 +1,6 @@
-@{ ViewData["Title"] = "찾을 수 없음"; }
+@{ ViewData["Title"] = L["찾을 수 없음"]; }
 <div class="text-center py-5">
     <h1 class="display-5">404</h1>
-    <p class="lead">요청하신 항목을 찾을 수 없습니다.</p>
-    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">대시보드로 이동</a>
+    <p class="lead">@L["요청하신 항목을 찾을 수 없습니다."]</p>
+    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">@L["대시보드로 이동"]</a>
 </div>

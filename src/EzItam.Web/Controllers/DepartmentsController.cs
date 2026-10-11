@@ -1,11 +1,13 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
 public class DepartmentsController : BaseController
 {
-    public DepartmentsController(ItamApiClient api) : base(api) { }
+    public DepartmentsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index() => View(await Api.ListAsync<DepartmentDto>("departments"));
 
@@ -19,7 +21,7 @@ public class DepartmentsController : BaseController
         try
         {
             await Api.CreateAsync("departments", model);
-            Success("부서가 등록되었습니다.");
+            Success(L["부서가 등록되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex) { AddApiError(ex); return View("Form", model); }
@@ -36,7 +38,7 @@ public class DepartmentsController : BaseController
         try
         {
             await Api.UpdateAsync("departments", id, model);
-            Success("부서가 저장되었습니다.");
+            Success(L["부서가 저장되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex) { AddApiError(ex); return View("Form", model); }
@@ -48,9 +50,9 @@ public class DepartmentsController : BaseController
         try
         {
             await Api.DeleteAsync("departments", id);
-            Success("부서가 삭제되었습니다.");
+            Success(L["부서가 삭제되었습니다."]);
         }
-        catch (ApiException ex) { Error(ex.Message); }
+        catch (ApiException ex) { Error(L[ex.Message]); }
         return RedirectToAction(nameof(Index));
     }
 }

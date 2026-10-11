@@ -5,7 +5,7 @@
     <div class="col-md-8 mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
     <div class="col-md-4 mb-3"><label asp-for="Version" class="form-label"></label><input asp-for="Version" class="form-control" /></div>
     <div class="col-md-6 mb-3"><label asp-for="Publisher" class="form-label"></label><input asp-for="Publisher" class="form-control" /></div>
-    <div class="col-md-6 mb-3"><label asp-for="VendorId" class="form-label"></label><select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">-- 미지정 --</option></select></div>
+    <div class="col-md-6 mb-3"><label asp-for="VendorId" class="form-label"></label><select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">@L["-- 미지정 --"]</option></select></div>
     <div class="col-md-6 mb-3"><label asp-for="LicenseType" class="form-label"></label><select asp-for="LicenseType" class="form-select" asp-items="ViewBag.Types"></select></div>
     <div class="col-md-6 mb-3"><label asp-for="TotalSeats" class="form-label"></label><input asp-for="TotalSeats" class="form-control" type="number" min="0" /><span asp-validation-for="TotalSeats" class="text-danger small"></span></div>
     <div class="col-12 mb-3"><label asp-for="LicenseKey" class="form-label"></label><input asp-for="LicenseKey" class="form-control" /></div>

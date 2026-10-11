@@ -1,11 +1,11 @@
 @model SoftwareLicenseDto
-@{ ViewData["Title"] = "라이선스 수정"; }
-<partial name="_PageHeader" model="@($"라이선스 수정 - {Model.Name}")" />
+@{ ViewData["Title"] = L["라이선스 수정"]; }
+<partial name="_PageHeader" model="@(L["라이선스 수정 - {0}", Model.Name].Value)" />
 <div class="card" style="max-width:800px"><div class="card-body">
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-once>
         <partial name="_Form" model="Model" />
-        <button type="submit" class="btn btn-primary">저장</button>
-        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">취소</a>
+        <button type="submit" class="btn btn-primary">@L["저장"]</button>
+        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">@L["취소"]</a>
     </form>
 </div></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -19,6 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
 document.querySelectorAll('form[data-once]').forEach(function (f) {
   f.addEventListener('submit', function () {
     var b = f.querySelector('button[type=submit]');
-    if (b) { b.disabled = true; b.textContent = '처리 중...'; }
+    if (b) { b.disabled = true; b.textContent = document.body.dataset.busyText || b.textContent; }
   });
 });

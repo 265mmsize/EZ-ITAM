@@ -1,8 +1,8 @@
 @model ChangeStatusViewModel
-@{ ViewData["Title"] = "상태 변경"; }
-<partial name="_PageHeader" model="@($"상태 변경 - {Model.AssetTag} {Model.AssetName}")" />
+@{ ViewData["Title"] = L["상태 변경"]; }
+<partial name="_PageHeader" model="@(L["상태 변경 - {0} {1}", Model.AssetTag, Model.AssetName].Value)" />
 <div class="card" style="max-width:560px"><div class="card-body">
-    <p>현재 상태: @Model.CurrentStatus.StatusBadge()</p>
+    <p>@L["현재 상태: {0}", Model.CurrentStatus.StatusBadge()]</p>
     <form asp-action="ChangeStatus" method="post" data-once>
         <input type="hidden" asp-for="AssetId" /><input type="hidden" asp-for="AssetTag" /><input type="hidden" asp-for="AssetName" /><input type="hidden" asp-for="CurrentStatus" />
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
@@ -12,10 +12,10 @@
         </div>
         <div class="mb-3">
             <label asp-for="Notes" class="form-label"></label>
-            <input asp-for="Notes" class="form-control" placeholder="변경 사유 (비고에 기록됩니다)" />
+            <input asp-for="Notes" class="form-control" placeholder="@L["변경 사유 (비고에 기록됩니다)"]" />
         </div>
-        <button type="submit" class="btn btn-primary">변경</button>
-        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.AssetId">취소</a>
+        <button type="submit" class="btn btn-primary">@L["변경"]</button>
+        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.AssetId">@L["취소"]</a>
     </form>
 </div></div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

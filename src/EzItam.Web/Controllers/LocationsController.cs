@@ -1,11 +1,13 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
 public class LocationsController : BaseController
 {
-    public LocationsController(ItamApiClient api) : base(api) { }
+    public LocationsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index() => View(await Api.ListAsync<LocationDto>("locations"));
 
@@ -19,7 +21,7 @@ public class LocationsController : BaseController
         try
         {
             await Api.CreateAsync("locations", model);
-            Success("위치가 등록되었습니다.");
+            Success(L["위치가 등록되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex) { AddApiError(ex); return View("Form", model); }
@@ -36,7 +38,7 @@ public class LocationsController : BaseController
         try
         {
             await Api.UpdateAsync("locations", id, model);
-            Success("위치가 저장되었습니다.");
+            Success(L["위치가 저장되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex) { AddApiError(ex); return View("Form", model); }
@@ -48,9 +50,9 @@ public class LocationsController : BaseController
         try
         {
             await Api.DeleteAsync("locations", id);
-            Success("위치가 삭제되었습니다.");
+            Success(L["위치가 삭제되었습니다."]);
         }
-        catch (ApiException ex) { Error(ex.Message); }
+        catch (ApiException ex) { Error(L[ex.Message]); }
         return RedirectToAction(nameof(Index));
     }
 }

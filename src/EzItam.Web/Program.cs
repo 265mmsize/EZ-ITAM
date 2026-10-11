@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Localization;
 var builder = WebApplication.CreateBuilder(args);
 
 // 본사 화면은 DB를 쓰지 않습니다. 로그인 계정 확인과 모든 데이터는 API 가 담당합니다.
-builder.Services.AddControllersWithViews(options => options.Filters.Add<ApiExceptionFilter>());
+builder.Services.AddLocalization();
+builder.Services.AddControllersWithViews(options => options.Filters.Add<ApiExceptionFilter>())
+    .AddDataAnnotationsLocalization(o => o.DataAnnotationLocalizerProvider = (_, _) => new JsonStringLocalizer<SharedResource>(Strings.Store!));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -35,6 +37,7 @@ builder.Services.AddSingleton<JsonLocalizerStore>();
 builder.Services.AddSingleton(typeof(IStringLocalizer<>), typeof(JsonStringLocalizer<>));
 
 var app = builder.Build();
+Strings.Store = app.Services.GetRequiredService<JsonLocalizerStore>();
 
 var supported = new[] { new CultureInfo("ko-KR"), new CultureInfo("en-US"), new CultureInfo("vi-VN") };
 app.UseRequestLocalization(new RequestLocalizationOptions

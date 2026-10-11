@@ -1,11 +1,13 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
 public class VendorsController : BaseController
 {
-    public VendorsController(ItamApiClient api) : base(api) { }
+    public VendorsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index() => View(await Api.ListAsync<VendorDto>("vendors"));
 
@@ -19,7 +21,7 @@ public class VendorsController : BaseController
         try
         {
             await Api.CreateAsync("vendors", model);
-            Success("공급업체가 등록되었습니다.");
+            Success(L["공급업체가 등록되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex) { AddApiError(ex); return View("Form", model); }
@@ -36,7 +38,7 @@ public class VendorsController : BaseController
         try
         {
             await Api.UpdateAsync("vendors", id, model);
-            Success("공급업체가 저장되었습니다.");
+            Success(L["공급업체가 저장되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex) { AddApiError(ex); return View("Form", model); }
@@ -48,9 +50,9 @@ public class VendorsController : BaseController
         try
         {
             await Api.DeleteAsync("vendors", id);
-            Success("공급업체가 삭제되었습니다. (연결된 자산의 공급업체는 비워집니다.)");
+            Success(L["공급업체가 삭제되었습니다. (연결된 자산의 공급업체는 비워집니다.)"]);
         }
-        catch (ApiException ex) { Error(ex.Message); }
+        catch (ApiException ex) { Error(L[ex.Message]); }
         return RedirectToAction(nameof(Index));
     }
 }

@@ -1,33 +1,33 @@
 @model List<AgentDto>
-@{ ViewData["Title"] = "PC 에이전트"; }
+@{ ViewData["Title"] = L["PC 에이전트"]; }
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">PC 에이전트 <span class="text-muted fs-6">@(Model.Count)대</span></h1>
+    <h1 class="h4 mb-0">@L["PC 에이전트"] <span class="text-muted fs-6">@(Model.Count)대</span></h1>
 </div>
 <div class="card mb-3"><div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
-        <div class="col-md-3"><label class="form-label small mb-0">상태</label><select name="status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">전체</option></select></div>
-        <div class="col-md-4"><label class="form-label small mb-0">검색</label><input name="search" value="@ViewBag.Search" class="form-control form-control-sm" placeholder="호스트명, 시리얼, 사용자" /></div>
-        <div class="col-md-2 d-flex gap-1"><button class="btn btn-sm btn-primary">검색</button><a class="btn btn-sm btn-outline-secondary" asp-action="Index">초기화</a></div>
+        <div class="col-md-3"><label class="form-label small mb-0">@L["상태"]</label><select name="status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">@L["전체"]</option></select></div>
+        <div class="col-md-4"><label class="form-label small mb-0">@L["검색"]</label><input name="search" value="@ViewBag.Search" class="form-control form-control-sm" placeholder="@L["호스트명, 시리얼, 사용자"]" /></div>
+        <div class="col-md-2 d-flex gap-1"><button class="btn btn-sm btn-primary">@L["검색"]</button><a class="btn btn-sm btn-outline-secondary" asp-action="Index">@L["초기화"]</a></div>
     </form>
 </div></div>
 <div class="card"><div class="table-responsive">
 <table class="table table-sm table-hover mb-0">
-    <thead class="table-light"><tr><th>호스트명</th><th>상태</th><th>온라인</th><th>사용자</th><th>OS</th><th>연결 자산</th><th>마지막 접속</th><th>마지막 인벤토리</th><th>버전</th></tr></thead>
+    <thead class="table-light"><tr><th>@L["호스트명"]</th><th>@L["상태"]</th><th>@L["온라인"]</th><th>@L["사용자"]</th><th>OS</th><th>@L["연결 자산"]</th><th>@L["마지막 접속"]</th><th>@L["마지막 인벤토리"]</th><th>@L["버전"]</th></tr></thead>
     <tbody>
     @foreach (var a in Model)
     {
         <tr>
             <td><a asp-action="Details" asp-route-id="@a.Id"><strong>@a.HostName</strong></a></td>
             <td>@a.Status.Display()</td>
-            <td>@if (a.IsOnline) { <span class="badge bg-success">온라인</span> } else { <span class="badge bg-secondary">오프라인</span> }</td>
+            <td>@if (a.IsOnline) { <span class="badge bg-success">@L["온라인"]</span> } else { <span class="badge bg-secondary">@L["오프라인"]</span> }</td>
             <td>@a.LoggedOnUser</td>
             <td class="small">@a.OsName @a.OsBuild</td>
-            <td>@if (a.Asset is not null) { <a asp-controller="Assets" asp-action="Details" asp-route-id="@a.AssetId">@a.Asset.AssetTag</a> } else { <span class="text-muted">미연결</span> }</td>
+            <td>@if (a.Asset is not null) { <a asp-controller="Assets" asp-action="Details" asp-route-id="@a.AssetId">@a.Asset.AssetTag</a> } else { <span class="text-muted">@L["미연결"]</span> }</td>
             <td class="small">@a.LastSeenAt.Ymdhm()</td>
             <td class="small">@a.LastInventoryAt.Ymdhm()</td>
             <td class="small">@a.AgentVersion</td>
         </tr>
     }
-    @if (Model.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">등록된 에이전트가 없습니다.</td></tr> }
+    @if (Model.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">@L["등록된 에이전트가 없습니다."]</td></tr> }
     </tbody>
 </table></div></div>

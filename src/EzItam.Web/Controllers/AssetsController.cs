@@ -1,4 +1,6 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using EzItam.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 
@@ -6,7 +8,7 @@ namespace EzItam.Web.Controllers;
 
 public class AssetsController : BaseController
 {
-    public AssetsController(ItamApiClient api) : base(api) { }
+    public AssetsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index(AssetFilter filter)
     {
@@ -50,13 +52,13 @@ public class AssetsController : BaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(AssetDto asset)
     {
-        if (asset.CategoryId == 0) ModelState.AddModelError(nameof(AssetDto.CategoryId), "분류를 선택하세요.");
+        if (asset.CategoryId == 0) ModelState.AddModelError(nameof(AssetDto.CategoryId), L["분류를 선택하세요."]);
         if (ModelState.IsValid)
         {
             try
             {
                 var saved = await Api.CreateAssetAsync(asset);
-                Success($"자산 {saved.AssetTag} 이(가) 등록되었습니다.");
+                Success(L["자산 {0} 이(가) 등록되었습니다.", saved.AssetTag]);
                 return RedirectToAction(nameof(Details), new { id = saved.Id });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -92,7 +94,7 @@ public class AssetsController : BaseController
             try
             {
                 await Api.UpdateAssetAsync(id, asset);
-                Success("자산 정보가 저장되었습니다.");
+                Success(L["자산 정보가 저장되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -109,12 +111,12 @@ public class AssetsController : BaseController
         try
         {
             await Api.DeleteAssetAsync(id);
-            Success("자산이 삭제되었습니다.");
+            Success(L["자산이 삭제되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex)
         {
-            Error(ex.Message);
+            Error(L[ex.Message]);
             return RedirectToAction(nameof(Details), new { id });
         }
     }
@@ -137,7 +139,7 @@ public class AssetsController : BaseController
             try
             {
                 await Api.CheckOutAsync(model.AssetId, new CheckOutRequest { EmployeeId = model.EmployeeId!.Value, Notes = model.Notes });
-                Success("불출 처리되었습니다.");
+                Success(L["불출 처리되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id = model.AssetId });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -169,7 +171,7 @@ public class AssetsController : BaseController
             try
             {
                 await Api.CheckInAsync(model.AssetId, new CheckInRequest { NewStatus = model.NewStatus, LocationId = model.LocationId, Notes = model.Notes });
-                Success("반납 처리되었습니다.");
+                Success(L["반납 처리되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id = model.AssetId });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -197,7 +199,7 @@ public class AssetsController : BaseController
             try
             {
                 await Api.ChangeStatusAsync(model.AssetId, new ChangeStatusRequest { NewStatus = model.NewStatus, Notes = model.Notes });
-                Success("상태가 변경되었습니다.");
+                Success(L["상태가 변경되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id = model.AssetId });
             }
             catch (ApiException ex) { AddApiError(ex); }

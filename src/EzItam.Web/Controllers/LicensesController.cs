@@ -1,4 +1,6 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using EzItam.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 
@@ -6,7 +8,7 @@ namespace EzItam.Web.Controllers;
 
 public class LicensesController : BaseController
 {
-    public LicensesController(ItamApiClient api) : base(api) { }
+    public LicensesController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index(string? search, bool expiringOnly)
     {
@@ -34,7 +36,7 @@ public class LicensesController : BaseController
             try
             {
                 var saved = await Api.CreateLicenseAsync(license);
-                Success("라이선스가 등록되었습니다.");
+                Success(L["라이선스가 등록되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id = saved.Id });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -62,7 +64,7 @@ public class LicensesController : BaseController
             try
             {
                 await Api.UpdateLicenseAsync(id, input);
-                Success("라이선스 정보가 저장되었습니다.");
+                Success(L["라이선스 정보가 저장되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -79,12 +81,12 @@ public class LicensesController : BaseController
         try
         {
             await Api.DeleteLicenseAsync(id);
-            Success("라이선스가 삭제되었습니다.");
+            Success(L["라이선스가 삭제되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex)
         {
-            Error(ex.Message);
+            Error(L[ex.Message]);
             return RedirectToAction(nameof(Details), new { id });
         }
     }
@@ -108,7 +110,7 @@ public class LicensesController : BaseController
             try
             {
                 await Api.AssignLicenseAsync(model.LicenseId, new LicenseAssignRequest { EmployeeId = model.EmployeeId, AssetId = model.AssetId, Notes = model.Notes });
-                Success("라이선스가 할당되었습니다.");
+                Success(L["라이선스가 할당되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id = model.LicenseId });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -126,9 +128,9 @@ public class LicensesController : BaseController
         try
         {
             await Api.ReleaseLicenseAssignmentAsync(id);
-            Success("라이선스 할당이 해제되었습니다.");
+            Success(L["라이선스 할당이 해제되었습니다."]);
         }
-        catch (ApiException ex) { Error(ex.Message); }
+        catch (ApiException ex) { Error(L[ex.Message]); }
         return RedirectToAction(nameof(Details), new { id = licenseId });
     }
 

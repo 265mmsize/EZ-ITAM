@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+<body data-busy-text="@L["처리 중..."].Value">
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
@@ -47,7 +47,7 @@
             <div class="small text-truncate">@User.Identity!.Name</div>
             <div class="small text-muted">@(isAdmin ? L["role.admin"] : canEdit ? L["role.manager"] : L["role.viewer"])</div>
             <div class="d-flex gap-1 mt-2 small">
-                <a class="text-white-50" href="/Home/SetLanguage?culture=ko-KR&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">한국어</a> ·
+                <a class="text-white-50" href="/Home/SetLanguage?culture=ko-KR&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">@L["한국어"]</a> ·
                 <a class="text-white-50" href="/Home/SetLanguage?culture=en-US&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">English</a> ·
                 <a class="text-white-50" href="/Home/SetLanguage?culture=vi-VN&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">Tiếng Việt</a>
             </div>

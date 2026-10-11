@@ -2,70 +2,70 @@
 @{ ViewData["Title"] = Model.Name; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <a class="small text-muted" asp-action="Index">← 사원 목록</a>
-        <h1 class="h4 mb-0">@Model.DisplayName <span class="text-muted fw-normal fs-6">@Model.Department?.Name @Model.Title</span> @if (!Model.IsActive) { <span class="badge bg-secondary">퇴직</span> }</h1>
+        <a class="small text-muted" asp-action="Index">@L["← 사원 목록"]</a>
+        <h1 class="h4 mb-0">@Model.DisplayName <span class="text-muted fw-normal fs-6">@Model.Department?.Name @Model.Title</span> @if (!Model.IsActive) { <span class="badge bg-secondary">@L["퇴직"]</span> }</h1>
     </div>
     @if (canEdit)
     {
         <div class="d-flex gap-2">
-            <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@Model.Id">수정</a>
+            <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@Model.Id">@L["수정"]</a>
             @if (isAdmin) { <partial name="_ConfirmDelete" model="@(("Employees", (object)Model.Id, Model.Name))" /> }
         </div>
     }
 </div>
 <div class="row g-3">
     <div class="col-lg-4">
-        <div class="card h-100"><div class="card-header">사원 정보</div><div class="card-body">
+        <div class="card h-100"><div class="card-header">@L["사원 정보"]</div><div class="card-body">
             <dl class="dl-grid">
-                <dt>사번</dt><dd>@Model.EmployeeNo</dd>
-                <dt>부서</dt><dd>@(Model.Department?.Name ?? "-")</dd>
-                <dt>직급</dt><dd>@(Model.Title ?? "-")</dd>
-                <dt>이메일</dt><dd>@(Model.Email ?? "-")</dd>
-                <dt>재직</dt><dd>@(Model.IsActive ? "재직" : "퇴직")</dd>
+                <dt>@L["사번"]</dt><dd>@Model.EmployeeNo</dd>
+                <dt>@L["부서"]</dt><dd>@(Model.Department?.Name ?? "-")</dd>
+                <dt>@L["직급"]</dt><dd>@(Model.Title ?? "-")</dd>
+                <dt>@L["이메일"]</dt><dd>@(Model.Email ?? "-")</dd>
+                <dt>@L["재직"]</dt><dd>@(Model.IsActive ? L["재직"] : L["퇴직"])</dd>
             </dl>
         </div></div>
     </div>
     <div class="col-lg-8">
         <div class="card h-100">
-            <div class="card-header">사용중인 자산 (@Model.Assets.Count)</div>
+            <div class="card-header">@L["사용중인 자산 ({0})", Model.Assets.Count]</div>
             <table class="table table-sm mb-0">
-                <thead><tr><th>자산번호</th><th>자산명</th><th>분류</th><th>모델</th><th>S/N</th></tr></thead>
+                <thead><tr><th>@L["자산번호"]</th><th>@L["자산명"]</th><th>@L["분류"]</th><th>@L["모델"]</th><th>S/N</th></tr></thead>
                 <tbody>
                 @foreach (var a in Model.Assets)
                 {
                     <tr><td><a asp-controller="Assets" asp-action="Details" asp-route-id="@a.Id">@a.AssetTag</a></td><td>@a.Name</td><td>@a.Category?.Name</td><td>@a.Model</td><td>@a.SerialNumber</td></tr>
                 }
-                @if (Model.Assets.Count == 0) { <tr><td colspan="5" class="text-muted">사용중인 자산 없음</td></tr> }
+                @if (Model.Assets.Count == 0) { <tr><td colspan="5" class="text-muted">@L["사용중인 자산 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">할당된 소프트웨어 라이선스</div>
+            <div class="card-header">@L["할당된 소프트웨어 라이선스"]</div>
             <table class="table table-sm mb-0">
-                <thead><tr><th>소프트웨어</th><th>유형</th><th>할당일</th></tr></thead>
+                <thead><tr><th>@L["소프트웨어"]</th><th>@L["유형"]</th><th>@L["할당일"]</th></tr></thead>
                 <tbody>
                 @foreach (var l in Model.LicenseAssignments)
                 {
                     <tr><td><a asp-controller="Licenses" asp-action="Details" asp-route-id="@l.SoftwareLicenseId">@l.SoftwareLicense?.Name</a></td><td>@l.SoftwareLicense?.LicenseType.Display()</td><td>@l.AssignedAt.Ymd()</td></tr>
                 }
-                @if (Model.LicenseAssignments.Count == 0) { <tr><td colspan="3" class="text-muted">할당된 라이선스 없음</td></tr> }
+                @if (Model.LicenseAssignments.Count == 0) { <tr><td colspan="3" class="text-muted">@L["할당된 라이선스 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header">자산 불출/반납 이력</div>
+            <div class="card-header">@L["자산 불출/반납 이력"]</div>
             <table class="table table-sm mb-0">
-                <thead><tr><th>자산</th><th>불출</th><th>반납</th></tr></thead>
+                <thead><tr><th>@L["자산"]</th><th>@L["불출"]</th><th>@L["반납"]</th></tr></thead>
                 <tbody>
                 @foreach (var x in Model.Assignments)
                 {
-                    <tr class="@(x.IsOpen ? "table-primary" : "")"><td><a asp-controller="Assets" asp-action="Details" asp-route-id="@x.AssetId">@x.Asset?.AssetTag</a> <span class="text-muted small">@x.Asset?.Name</span></td><td>@x.AssignedAt.Ymd()</td><td>@(x.ReturnedAt.HasValue ? x.ReturnedAt.Ymd() : "사용중")</td></tr>
+                    <tr class="@(x.IsOpen ? "table-primary" : "")"><td><a asp-controller="Assets" asp-action="Details" asp-route-id="@x.AssetId">@x.Asset?.AssetTag</a> <span class="text-muted small">@x.Asset?.Name</span></td><td>@x.AssignedAt.Ymd()</td><td>@(x.ReturnedAt.HasValue ? x.ReturnedAt.Ymd() : L["사용중"])</td></tr>
                 }
-                @if (Model.Assignments.Count == 0) { <tr><td colspan="3" class="text-muted">이력 없음</td></tr> }
+                @if (Model.Assignments.Count == 0) { <tr><td colspan="3" class="text-muted">@L["이력 없음"]</td></tr> }
                 </tbody>
             </table>
         </div>

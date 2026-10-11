@@ -1,11 +1,13 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
 public class HomeController : BaseController
 {
-    public HomeController(ItamApiClient api) : base(api) { }
+    public HomeController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index()
         => View(await Api.DashboardAsync());

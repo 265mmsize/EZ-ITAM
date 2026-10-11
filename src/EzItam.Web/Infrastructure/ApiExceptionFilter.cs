@@ -25,7 +25,7 @@ public sealed class ApiExceptionFilter : IExceptionFilter
                 break;
             default:
                 var tempData = context.HttpContext.RequestServices.GetRequiredService<ITempDataDictionaryFactory>().GetTempData(context.HttpContext);
-                tempData["Alert.Error"] = ex.Message;
+                tempData["Alert.Error"] = EzItam.Web.Localization.Strings.Get(ex.Message);
                 var referer = context.HttpContext.Request.Headers.Referer.ToString();
                 context.Result = string.IsNullOrEmpty(referer)
                     ? new RedirectToActionResult("Index", "Home", null)

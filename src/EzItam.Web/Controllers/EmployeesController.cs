@@ -1,11 +1,13 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
 public class EmployeesController : BaseController
 {
-    public EmployeesController(ItamApiClient api) : base(api) { }
+    public EmployeesController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index(string? search, int? departmentId, bool includeInactive)
     {
@@ -33,7 +35,7 @@ public class EmployeesController : BaseController
             try
             {
                 var saved = await Api.CreateAsync("employees", model);
-                Success("사원이 등록되었습니다.");
+                Success(L["사원이 등록되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id = saved.Id });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -59,7 +61,7 @@ public class EmployeesController : BaseController
             try
             {
                 await Api.UpdateAsync("employees", id, model);
-                Success("사원 정보가 저장되었습니다.");
+                Success(L["사원 정보가 저장되었습니다."]);
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -74,12 +76,12 @@ public class EmployeesController : BaseController
         try
         {
             await Api.DeleteAsync("employees", id);
-            Success("사원이 삭제되었습니다.");
+            Success(L["사원이 삭제되었습니다."]);
             return RedirectToAction(nameof(Index));
         }
         catch (ApiException ex)
         {
-            Error(ex.Message);
+            Error(L[ex.Message]);
             return RedirectToAction(nameof(Details), new { id });
         }
     }

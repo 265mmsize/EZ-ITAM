@@ -1,11 +1,13 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
 public class MaintenanceController : BaseController
 {
-    public MaintenanceController(ItamApiClient api) : base(api) { }
+    public MaintenanceController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index(bool openOnly, MaintenanceType? type)
     {
@@ -35,7 +37,7 @@ public class MaintenanceController : BaseController
             try
             {
                 await Api.CreateMaintenanceAsync(record, setInRepair);
-                Success("유지보수 이력이 등록되었습니다.");
+                Success(L["유지보수 이력이 등록되었습니다."]);
                 return RedirectToAction("Details", "Assets", new { id = record.AssetId });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -67,7 +69,7 @@ public class MaintenanceController : BaseController
             try
             {
                 var saved = await Api.UpdateMaintenanceAsync(id, input, restoreToStock);
-                Success("유지보수 이력이 저장되었습니다.");
+                Success(L["유지보수 이력이 저장되었습니다."]);
                 return RedirectToAction("Details", "Assets", new { id = saved.AssetId });
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -85,7 +87,7 @@ public class MaintenanceController : BaseController
     {
         var record = await Api.GetMaintenanceAsync(id);
         await Api.DeleteMaintenanceAsync(id);
-        Success("유지보수 이력이 삭제되었습니다.");
+        Success(L["유지보수 이력이 삭제되었습니다."]);
         return RedirectToAction("Details", "Assets", new { id = record.AssetId });
     }
 }

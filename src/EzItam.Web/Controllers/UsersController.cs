@@ -1,4 +1,6 @@
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
@@ -6,7 +8,7 @@ namespace EzItam.Web.Controllers;
 [Authorize(Policy = "AdminOnly")]
 public class UsersController : BaseController
 {
-    public UsersController(ItamApiClient api) : base(api) { }
+    public UsersController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     public async Task<IActionResult> Index() => View(await Api.ListUsersAsync());
 
@@ -19,13 +21,13 @@ public class UsersController : BaseController
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(UserFormDto model)
     {
-        if (string.IsNullOrWhiteSpace(model.Password)) ModelState.AddModelError(nameof(model.Password), "비밀번호를 입력하세요.");
+        if (string.IsNullOrWhiteSpace(model.Password)) ModelState.AddModelError(nameof(model.Password), L["비밀번호를 입력하세요."]);
         if (ModelState.IsValid)
         {
             try
             {
                 var u = await Api.CreateUserAsync(model);
-                Success($"사용자 {u.UserName} 이(가) 생성되었습니다.");
+                Success(L["사용자 {0} 이(가) 생성되었습니다.", u.UserName]);
                 return RedirectToAction(nameof(Index));
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -51,7 +53,7 @@ public class UsersController : BaseController
             try
             {
                 await Api.UpdateUserAsync(id, model);
-                Success("사용자 정보가 저장되었습니다.");
+                Success(L["사용자 정보가 저장되었습니다."]);
                 return RedirectToAction(nameof(Index));
             }
             catch (ApiException ex) { AddApiError(ex); }
@@ -66,9 +68,9 @@ public class UsersController : BaseController
         try
         {
             await Api.DeleteUserAsync(id);
-            Success("사용자가 삭제되었습니다.");
+            Success(L["사용자가 삭제되었습니다."]);
         }
-        catch (ApiException ex) { Error(ex.Message); }
+        catch (ApiException ex) { Error(L[ex.Message]); }
         return RedirectToAction(nameof(Index));
     }
 
@@ -76,7 +78,7 @@ public class UsersController : BaseController
     public async Task<IActionResult> Unlock(string id)
     {
         await Api.UnlockUserAsync(id);
-        Success("계정 잠금이 해제되었습니다.");
+        Success(L["계정 잠금이 해제되었습니다."]);
         return RedirectToAction(nameof(Index));
     }
 
@@ -84,9 +86,9 @@ public class UsersController : BaseController
     {
         ViewBag.Roles = new List<SelectListItem>
         {
-            new("관리자 (Admin) - 모든 기능", "Admin"),
-            new("담당자 (Manager) - 등록/수정/불출/반납", "Manager"),
-            new("조회자 (Viewer) - 조회만", "Viewer")
+            new(L["관리자 (Admin) - 모든 기능"], "Admin"),
+            new(L["담당자 (Manager) - 등록/수정/불출/반납"], "Manager"),
+            new(L["조회자 (Viewer) - 조회만"], "Viewer")
         };
     }
 }

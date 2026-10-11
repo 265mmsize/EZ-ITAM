@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using EzItam.Web.Api;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using EzItam.Web.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -9,7 +11,7 @@ namespace EzItam.Web.Controllers;
 
 public class AccountController : BaseController
 {
-    public AccountController(ItamApiClient api) : base(api) { }
+    public AccountController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
 
     [HttpGet]
     [AllowAnonymous]
@@ -64,7 +66,7 @@ public class AccountController : BaseController
     public async Task<IActionResult> Expired()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        TempData["Alert.Error"] = "로그인 세션이 만료되었습니다. 다시 로그인하세요.";
+        TempData["Alert.Error"] = L["로그인 세션이 만료되었습니다. 다시 로그인하세요."];
         return RedirectToAction(nameof(Login));
     }
 
@@ -83,7 +85,7 @@ public class AccountController : BaseController
         try
         {
             await Api.ChangePasswordAsync(new ChangePasswordRequest { CurrentPassword = model.CurrentPassword, NewPassword = model.NewPassword });
-            Success("비밀번호가 변경되었습니다.");
+            Success(L["비밀번호가 변경되었습니다."]);
             return RedirectToAction("Index", "Home");
         }
         catch (ApiException ex)

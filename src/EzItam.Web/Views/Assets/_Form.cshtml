@@ -4,19 +4,19 @@
 <input type="hidden" asp-for="Id" />
 <div class="row g-3">
     <div class="col-md-6">
-        <div class="card h-100"><div class="card-header">기본 정보</div><div class="card-body">
+        <div class="card h-100"><div class="card-header">@L["기본 정보"]</div><div class="card-body">
             <div class="mb-3">
                 <label asp-for="CategoryId" class="form-label"></label>
-                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories"><option value="0">-- 선택 --</option></select>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories"><option value="0">@L["-- 선택 --"]</option></select>
                 <span asp-validation-for="CategoryId" class="text-danger small"></span>
             </div>
             <div class="mb-3">
                 <label asp-for="AssetTag" class="form-label"></label>
                 <div class="input-group">
-                    <input asp-for="AssetTag" class="form-control" placeholder="예: NB-2025-0001" />
+                    <input asp-for="AssetTag" class="form-control" placeholder="@L["예: NB-2025-0001"]" />
                     @if (isNew)
                     {
-                        <button type="button" class="btn btn-outline-secondary" id="btn-next-tag" data-url="@Url.Action("NextTag")" data-auto="true">자동 채번</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-next-tag" data-url="@Url.Action("NextTag")" data-auto="true">@L["자동 채번"]</button>
                     }
                 </div>
                 <span asp-validation-for="AssetTag" class="text-danger small"></span>
@@ -42,23 +42,23 @@
             </div>
             <div class="mb-3">
                 <label asp-for="LocationId" class="form-label"></label>
-                <select asp-for="LocationId" class="form-select" asp-items="ViewBag.Locations"><option value="">-- 미지정 --</option></select>
+                <select asp-for="LocationId" class="form-select" asp-items="ViewBag.Locations"><option value="">@L["-- 미지정 --"]</option></select>
             </div>
             @if (isNew)
             {
                 <div class="mb-3">
                     <label asp-for="CurrentEmployeeId" class="form-label"></label>
-                    <select asp-for="CurrentEmployeeId" class="form-select" asp-items="ViewBag.Employees"><option value="">-- 재고 (미지정) --</option></select>
-                    <div class="form-text">사용자를 지정하면 '사용중' 상태로 등록되고 불출 이력이 생성됩니다.</div>
+                    <select asp-for="CurrentEmployeeId" class="form-select" asp-items="ViewBag.Employees"><option value="">@L["-- 재고 (미지정) --"]</option></select>
+                    <div class="form-text">@L["사용자를 지정하면 '사용중' 상태로 등록되고 불출 이력이 생성됩니다."]</div>
                 </div>
             }
         </div></div>
     </div>
     <div class="col-md-6">
-        <div class="card mb-3"><div class="card-header">구매 / 보증</div><div class="card-body">
+        <div class="card mb-3"><div class="card-header">@L["구매 / 보증"]</div><div class="card-body">
             <div class="mb-3">
                 <label asp-for="VendorId" class="form-label"></label>
-                <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">-- 미지정 --</option></select>
+                <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">@L["-- 미지정 --"]</option></select>
             </div>
             <div class="row">
                 <div class="col-6 mb-3">
@@ -78,7 +78,7 @@
                 </div>
             </div>
         </div></div>
-        <div class="card"><div class="card-header">네트워크 / OS</div><div class="card-body">
+        <div class="card"><div class="card-header">@L["네트워크 / OS"]</div><div class="card-body">
             <div class="row">
                 <div class="col-6 mb-3">
                     <label asp-for="HostName" class="form-label"></label>
