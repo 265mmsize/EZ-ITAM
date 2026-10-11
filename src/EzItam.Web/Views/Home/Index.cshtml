@@ -1,0 +1,178 @@
+@model DashboardSummary
+@{ ViewData["Title"] = "대시보드"; }
+<partial name="_PageHeader" model="@("대시보드")" />
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card"><div class="card-body">
+            <div class="stat-label">전체 자산</div>
+            <div class="stat-value">@Model.TotalAssets.ToString("#,##0")</div>
+            <div class="small text-muted">취득가 합계 @Model.TotalPurchaseValue.Money()</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card"><div class="card-body">
+            <div class="stat-label">사용중</div>
+            <div class="stat-value text-primary">@Model.AssignedAssets.ToString("#,##0")</div>
+            <div class="small text-muted">재고/유휴 @Model.InStockAssets · 수리중 @Model.InRepairAssets · 불용 이상 @Model.RetiredAssets</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card"><div class="card-body">
+            <div class="stat-label">보증 만료 임박 (30일)</div>
+            <div class="stat-value text-warning">@Model.WarrantyExpiringCount</div>
+            <div class="small text-muted">이미 만료 @Model.WarrantyExpiredCount 건</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card"><div class="card-body">
+            <div class="stat-label">라이선스</div>
+            <div class="stat-value">@Model.TotalLicenses</div>
+            <div class="small text-muted">
+                만료 임박 @Model.LicensesExpiringCount
+                @if (Model.LicensesOverAllocated > 0) { <span class="text-danger"> · 초과 할당 @Model.LicensesOverAllocated</span> }
+                · 미완료 유지보수 @Model.OpenMaintenanceCount
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">분류별 자산</div>
+            <div class="card-body">
+                @{ var maxCat = Model.ByCategory.Count == 0 ? 1 : Model.ByCategory.Max(x => x.Value); }
+                @foreach (var c in Model.ByCategory)
+                {
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small"><span>@c.Key</span><strong>@c.Value</strong></div>
+                        <div class="bar"><span style="width:@(100 * c.Value / maxCat)%"></span></div>
+                    </div>
+                }
+                @if (Model.ByCategory.Count == 0) { <div class="text-muted">등록된 자산이 없습니다.</div> }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">상태별 자산</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    @foreach (var s in Model.ByStatus)
+                    {
+                        <tr><td>@s.Key.StatusBadge()</td><td class="text-end"><a asp-controller="Assets" asp-action="Index" asp-route-status="@s.Key">@s.Value</a></td></tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">부서별 사용 자산</div>
+            <div class="card-body">
+                @{ var maxDep = Model.ByDepartment.Count == 0 ? 1 : Model.ByDepartment.Max(x => x.Value); }
+                @foreach (var d in Model.ByDepartment)
+                {
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small"><span>@d.Key</span><strong>@d.Value</strong></div>
+                        <div class="bar"><span style="width:@(100 * d.Value / maxDep)%; background:#059669"></span></div>
+                    </div>
+                }
+                @if (Model.ByDepartment.Count == 0) { <div class="text-muted">사용중인 자산이 없습니다.</div> }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between">
+                <span>보증 만료 임박 자산</span>
+                <a class="small" asp-controller="Assets" asp-action="Index" asp-route-warrantyExpiringOnly="true">전체 보기</a>
+            </div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>자산번호</th><th>자산명</th><th>사용자</th><th>만료일</th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.WarrantyExpiring)
+                {
+                    <tr>
+                        <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@a.Id">@a.AssetTag</a></td>
+                        <td>@a.Name</td>
+                        <td>@(a.CurrentEmployee?.Name ?? "-")</td>
+                        <td class="text-warning">@a.WarrantyExpiry.Ymd()</td>
+                    </tr>
+                }
+                @if (Model.WarrantyExpiring.Count == 0) { <tr><td colspan="4" class="text-muted">해당 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between">
+                <span>만료 임박 라이선스</span>
+                <a class="small" asp-controller="Licenses" asp-action="Index" asp-route-expiringOnly="true">전체 보기</a>
+            </div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>소프트웨어</th><th>유형</th><th>사용/보유</th><th>만료일</th></tr></thead>
+                <tbody>
+                @foreach (var l in Model.LicensesExpiring)
+                {
+                    <tr>
+                        <td><a asp-controller="Licenses" asp-action="Details" asp-route-id="@l.Id">@l.Name</a></td>
+                        <td>@l.LicenseType.Display()</td>
+                        <td>@l.UsedSeats / @l.TotalSeats</td>
+                        <td class="text-warning">@l.ExpiryDate.Ymd()</td>
+                    </tr>
+                }
+                @if (Model.LicensesExpiring.Count == 0) { <tr><td colspan="4" class="text-muted">해당 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">최근 불출/반납</div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>자산</th><th>사용자</th><th>불출</th><th>반납</th></tr></thead>
+                <tbody>
+                @foreach (var x in Model.RecentAssignments)
+                {
+                    <tr>
+                        <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@x.AssetId">@x.Asset?.AssetTag</a> <span class="text-muted small">@x.Asset?.Name</span></td>
+                        <td>@x.Employee?.Name</td>
+                        <td>@x.AssignedAt.Ymd()</td>
+                        <td>@(x.ReturnedAt.HasValue ? x.ReturnedAt.Ymd() : "<사용중>")</td>
+                    </tr>
+                }
+                @if (Model.RecentAssignments.Count == 0) { <tr><td colspan="4" class="text-muted">이력 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between">
+                <span>진행중 유지보수</span>
+                <a class="small" asp-controller="Maintenance" asp-action="Index" asp-route-openOnly="true">전체 보기</a>
+            </div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>자산</th><th>유형</th><th>내용</th><th>작업일</th></tr></thead>
+                <tbody>
+                @foreach (var m in Model.OpenMaintenance)
+                {
+                    <tr>
+                        <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@m.AssetId">@m.Asset?.AssetTag</a></td>
+                        <td>@m.Type.Display()</td>
+                        <td class="text-truncate" style="max-width:220px">@m.Description</td>
+                        <td>@m.Date.Ymd()</td>
+                    </tr>
+                }
+                @if (Model.OpenMaintenance.Count == 0) { <tr><td colspan="4" class="text-muted">해당 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

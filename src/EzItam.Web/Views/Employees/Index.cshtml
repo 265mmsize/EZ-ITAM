@@ -1,0 +1,29 @@
+@model List<Employee>
+@{ ViewData["Title"] = "사원"; bool includeInactive = ViewBag.IncludeInactive; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">사원 <span class="text-muted fs-6">@(Model.Count)명</span></h1>
+    @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 사원 등록</a> }
+</div>
+<div class="card mb-3"><div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label small mb-0">검색</label><input name="search" value="@ViewBag.Search" class="form-control form-control-sm" placeholder="이름, 사번, 이메일" /></div>
+        <div class="col-md-3"><label class="form-label small mb-0">부서</label><select name="departmentId" class="form-select form-select-sm" asp-items="ViewBag.Departments"><option value="">전체</option></select></div>
+        <div class="col-md-3"><div class="form-check"><input type="checkbox" class="form-check-input" id="includeInactive" name="includeInactive" value="true" @(includeInactive ? "checked" : "") /><label class="form-check-label" for="includeInactive">퇴직자 포함</label></div></div>
+        <div class="col-md-2 d-flex gap-1"><button class="btn btn-sm btn-primary">검색</button><a class="btn btn-sm btn-outline-secondary" asp-action="Index">초기화</a></div>
+    </form>
+</div></div>
+<div class="card"><table class="table table-sm table-hover mb-0">
+    <thead class="table-light"><tr><th>사번</th><th>이름</th><th>부서</th><th>직급</th><th>이메일</th><th>재직</th><th>사용 자산</th></tr></thead>
+    <tbody>
+    @foreach (var e in Model)
+    {
+        <tr class="@(e.IsActive ? "" : "text-muted")">
+            <td class="w-1"><code>@e.EmployeeNo</code></td>
+            <td><a asp-action="Details" asp-route-id="@e.Id"><strong>@e.Name</strong></a></td>
+            <td>@e.Department?.Name</td><td>@e.Title</td><td>@e.Email</td><td>@(e.IsActive ? "Y" : "N")</td>
+            <td>@if (e.Assets.Count > 0) { <a asp-controller="Assets" asp-action="Index" asp-route-employeeId="@e.Id">@e.Assets.Count</a> } else { <span>0</span> }</td>
+        </tr>
+    }
+    @if (Model.Count == 0) { <tr><td colspan="7" class="text-center text-muted py-4">조건에 맞는 사원이 없습니다.</td></tr> }
+    </tbody>
+</table></div>

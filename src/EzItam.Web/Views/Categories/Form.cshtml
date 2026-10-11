@@ -1,0 +1,16 @@
+@model AssetCategory
+@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "분류 등록" : "분류 수정"; }
+<partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
+<div class="card" style="max-width:560px"><div class="card-body">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? null : Model.Id)" method="post" data-once>
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="mb-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" placeholder="예: NB" /><span asp-validation-for="Code" class="text-danger small"></span><div class="form-text">자산번호 자동 채번 접두어로 사용됩니다. (예: NB-2025-0001)</div></div>
+        <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="Description" class="form-label"></label><input asp-for="Description" class="form-control" /></div>
+        <div class="mb-3"><label asp-for="DepreciationMonths" class="form-label"></label><input asp-for="DepreciationMonths" class="form-control" type="number" min="0" /><span asp-validation-for="DepreciationMonths" class="text-danger small"></span></div>
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

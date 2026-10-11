@@ -1,0 +1,76 @@
+@model SoftwareLicense
+@{
+    ViewData["Title"] = Model.Name;
+    var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
+    var isAdmin = User.IsInRole("Admin");
+    var unlimited = Model.LicenseType is LicenseType.Site or LicenseType.Free;
+}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <a class="small text-muted" asp-action="Index">← 라이선스 목록</a>
+        <h1 class="h4 mb-0">@Model.Name <span class="text-muted fw-normal fs-6">@Model.Publisher @Model.Version</span></h1>
+    </div>
+    @if (canEdit)
+    {
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-success" asp-action="Assign" asp-route-id="@Model.Id">할당</a>
+            <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@Model.Id">수정</a>
+            @if (isAdmin) { <partial name="_ConfirmDelete" model="@(("Licenses", (object)Model.Id, Model.Name))" /> }
+        </div>
+    }
+</div>
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-header">라이선스 정보</div><div class="card-body">
+            <dl class="dl-grid">
+                <dt>유형</dt><dd>@Model.LicenseType.Display()</dd>
+                <dt>사용 / 보유</dt>
+                <dd class="@(!unlimited && Model.UsedSeats > Model.TotalSeats ? "text-danger fw-bold" : "")">@Model.UsedSeats / @(unlimited ? "무제한" : Model.TotalSeats.ToString())
+                    @if (!unlimited) { <span class="text-muted">(잔여 @Model.AvailableSeats)</span> }
+                </dd>
+                <dt>라이선스 키</dt><dd class="text-break"><code>@(Model.LicenseKey ?? "-")</code></dd>
+                <dt>구매일</dt><dd>@Model.PurchaseDate.Ymd()</dd>
+                <dt>만료일</dt>
+                <dd class="@(Model.IsExpired ? "text-danger" : Model.IsExpiringSoon ? "text-warning fw-bold" : "")">@Model.ExpiryDate.Ymd()
+                    @if (Model.IsExpired) { <span class="badge bg-danger">만료</span> } else if (Model.IsExpiringSoon) { <span class="badge bg-warning text-dark">임박</span> }
+                </dd>
+                <dt>공급업체</dt><dd>@(Model.Vendor?.Name ?? "-")</dd>
+                <dt>구매비용</dt><dd>@Model.Cost.Money()</dd>
+                <dt>비고</dt><dd style="white-space:pre-wrap">@(Model.Notes ?? "-")</dd>
+            </dl>
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">할당 내역</div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>사용자</th><th>장비</th><th>할당일</th><th>해제일</th><th>비고</th>@if (canEdit) { <th></th> }</tr></thead>
+                <tbody>
+                @foreach (var a in Model.Assignments)
+                {
+                    <tr class="@(a.IsOpen ? "" : "text-muted")">
+                        <td>@if (a.Employee is not null) { <a asp-controller="Employees" asp-action="Details" asp-route-id="@a.EmployeeId">@a.Employee.DisplayName</a> } else { <text>-</text> }</td>
+                        <td>@if (a.Asset is not null) { <a asp-controller="Assets" asp-action="Details" asp-route-id="@a.AssetId">@a.Asset.AssetTag</a> } else { <text>-</text> }</td>
+                        <td>@a.AssignedAt.Ymd()</td>
+                        <td>@(a.ReleasedAt.HasValue ? a.ReleasedAt.Ymd() : "사용중")</td>
+                        <td class="small">@a.Notes</td>
+                        @if (canEdit)
+                        {
+                            <td class="w-1">
+                                @if (a.IsOpen)
+                                {
+                                    <form asp-action="Release" asp-route-id="@a.Id" asp-route-licenseId="@Model.Id" method="post" onsubmit="return confirm('할당을 해제하시겠습니까?');">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm btn-outline-warning">해제</button>
+                                    </form>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (Model.Assignments.Count == 0) { <tr><td colspan="6" class="text-muted">할당 내역 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

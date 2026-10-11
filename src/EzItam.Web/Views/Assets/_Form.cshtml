@@ -1,0 +1,112 @@
+@model Asset
+@{ var isNew = Model.Id == 0; }
+<div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+<input type="hidden" asp-for="Id" />
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100"><div class="card-header">기본 정보</div><div class="card-body">
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories"><option value="0">-- 선택 --</option></select>
+                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="AssetTag" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="AssetTag" class="form-control" placeholder="예: NB-2025-0001" />
+                    @if (isNew)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" id="btn-next-tag" data-url="@Url.Action("NextTag")" data-auto="true">자동 채번</button>
+                    }
+                </div>
+                <span asp-validation-for="AssetTag" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label asp-for="Manufacturer" class="form-label"></label>
+                    <input asp-for="Manufacturer" class="form-control" />
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="Model" class="form-label"></label>
+                    <input asp-for="Model" class="form-control" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SerialNumber" class="form-label"></label>
+                <input asp-for="SerialNumber" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="LocationId" class="form-label"></label>
+                <select asp-for="LocationId" class="form-select" asp-items="ViewBag.Locations"><option value="">-- 미지정 --</option></select>
+            </div>
+            @if (isNew)
+            {
+                <div class="mb-3">
+                    <label asp-for="CurrentEmployeeId" class="form-label"></label>
+                    <select asp-for="CurrentEmployeeId" class="form-select" asp-items="ViewBag.Employees"><option value="">-- 재고 (미지정) --</option></select>
+                    <div class="form-text">사용자를 지정하면 '사용중' 상태로 등록되고 불출 이력이 생성됩니다.</div>
+                </div>
+            }
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-3"><div class="card-header">구매 / 보증</div><div class="card-body">
+            <div class="mb-3">
+                <label asp-for="VendorId" class="form-label"></label>
+                <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">-- 미지정 --</option></select>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label asp-for="PurchaseDate" class="form-label"></label>
+                    <input asp-for="PurchaseDate" class="form-control" type="date" />
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="PurchasePrice" class="form-label"></label>
+                    <input asp-for="PurchasePrice" class="form-control" type="number" step="1" min="0" />
+                    <span asp-validation-for="PurchasePrice" class="text-danger small"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label asp-for="WarrantyExpiry" class="form-label"></label>
+                    <input asp-for="WarrantyExpiry" class="form-control" type="date" />
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="ErpAssetNumber" class="form-label"></label>
+                    <input asp-for="ErpAssetNumber" class="form-control" placeholder="Oracle EBS FA 자산번호" />
+                </div>
+            </div>
+        </div></div>
+        <div class="card"><div class="card-header">네트워크 / OS</div><div class="card-body">
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label asp-for="HostName" class="form-label"></label>
+                    <input asp-for="HostName" class="form-control" />
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="OperatingSystem" class="form-label"></label>
+                    <input asp-for="OperatingSystem" class="form-control" />
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="IpAddress" class="form-label"></label>
+                    <input asp-for="IpAddress" class="form-control" />
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="MacAddress" class="form-label"></label>
+                    <input asp-for="MacAddress" class="form-control" />
+                </div>
+            </div>
+        </div></div>
+    </div>
+    <div class="col-12">
+        <div class="card"><div class="card-body">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+        </div></div>
+    </div>
+</div>

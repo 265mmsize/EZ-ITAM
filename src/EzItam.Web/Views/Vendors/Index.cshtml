@@ -1,0 +1,25 @@
+@model List<Vendor>
+@{ ViewData["Title"] = "공급업체"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">공급업체</h1>
+    @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 공급업체 등록</a> }
+</div>
+<div class="card"><table class="table table-sm table-hover mb-0">
+    <thead class="table-light"><tr><th>공급업체명</th><th>담당자</th><th>전화번호</th><th>이메일</th><th>ERP ID</th><th>자산</th><th>라이선스</th>@if (canEdit) { <th></th> }</tr></thead>
+    <tbody>
+    @foreach (var v in Model)
+    {
+        <tr>
+            <td>@v.Name</td><td>@v.ContactName</td><td>@v.Phone</td><td>@v.Email</td><td>@(v.ErpVendorId?.ToString() ?? "-")</td>
+            <td>@v.Assets.Count</td><td>@v.Licenses.Count</td>
+            @if (canEdit)
+            {
+                <td class="w-1">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@v.Id">수정</a>
+                    @if (isAdmin) { <partial name="_ConfirmDelete" model="@(("Vendors", (object)v.Id, v.Name))" /> }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table></div>

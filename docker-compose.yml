@@ -1,0 +1,33 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "EzItam!Str0ngPass"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EzItam!Str0ngPass' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__Default: "Server=mssql,1433;Database=EzItam;User Id=sa;Password=EzItam!Str0ngPass;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Seed__SampleData: "true"
+      # OracleEbs__Enabled: "true"
+      # OracleEbs__ConnectionString: "User Id=apps;Password=***;Data Source=//ebs-db:1521/PROD"
+    ports:
+      - "8080:8080"
+
+volumes:
+  mssql-data:

@@ -1,0 +1,39 @@
+@model List<MaintenanceRecord>
+@{ ViewData["Title"] = "유지보수"; bool openOnly = ViewBag.OpenOnly; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); }
+<partial name="_PageHeader" model="@("유지보수 이력")" />
+<div class="card mb-3"><div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small mb-0">유형</label>
+            <select name="type" class="form-select form-select-sm" asp-items="ViewBag.Types"><option value="">전체</option></select>
+        </div>
+        <div class="col-md-3">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="openOnly" name="openOnly" value="true" @(openOnly ? "checked" : "") />
+                <label class="form-check-label" for="openOnly">진행중만</label>
+            </div>
+        </div>
+        <div class="col-md-2"><button class="btn btn-sm btn-primary">조회</button></div>
+    </form>
+</div></div>
+<div class="card"><div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>작업일</th><th>자산</th><th>유형</th><th>내용</th><th>비용</th><th>업체</th><th>완료일</th>@if (canEdit) { <th></th> }</tr></thead>
+        <tbody>
+        @foreach (var m in Model)
+        {
+            <tr class="@(m.IsCompleted ? "" : "table-warning")">
+                <td class="w-1">@m.Date.Ymd()</td>
+                <td class="w-1"><a asp-controller="Assets" asp-action="Details" asp-route-id="@m.AssetId">@m.Asset?.AssetTag</a> <span class="text-muted small">@m.Asset?.Name</span></td>
+                <td class="w-1">@m.Type.Display()</td>
+                <td>@m.Description</td>
+                <td class="w-1">@m.Cost.Money()</td>
+                <td class="w-1">@(m.Vendor?.Name ?? "-")</td>
+                <td class="w-1">@(m.CompletedAt.HasValue ? m.CompletedAt.Ymd() : "진행중")</td>
+                @if (canEdit) { <td class="w-1"><a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@m.Id">수정</a></td> }
+            </tr>
+        }
+        @if (Model.Count == 0) { <tr><td colspan="8" class="text-center text-muted py-4">이력이 없습니다.</td></tr> }
+        </tbody>
+    </table>
+</div></div>

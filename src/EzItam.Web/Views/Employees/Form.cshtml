@@ -1,0 +1,23 @@
+@model Employee
+@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "사원 등록" : "사원 수정"; }
+<partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
+<div class="card" style="max-width:560px"><div class="card-body">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? null : Model.Id)" method="post" data-once>
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="row">
+            <div class="col-6 mb-3"><label asp-for="EmployeeNo" class="form-label"></label><input asp-for="EmployeeNo" class="form-control" /><span asp-validation-for="EmployeeNo" class="text-danger small"></span></div>
+            <div class="col-6 mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+        </div>
+        <div class="row">
+            <div class="col-6 mb-3"><label asp-for="DepartmentId" class="form-label"></label><select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments"><option value="">-- 미지정 --</option></select></div>
+            <div class="col-6 mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /></div>
+        </div>
+        <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="ErpPersonId" class="form-label"></label><input asp-for="ErpPersonId" class="form-control" type="number" /><div class="form-text">Oracle EBS PER_ALL_PEOPLE_F.PERSON_ID (ERP 동기화 시 자동 설정)</div></div>
+        <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,25 @@
+@model List<Location>
+@{ ViewData["Title"] = "위치"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">위치</h1>
+    @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 위치 등록</a> }
+</div>
+<div class="card"><table class="table table-sm table-hover mb-0">
+    <thead class="table-light"><tr><th>위치명</th><th>건물</th><th>층</th><th>호실</th><th>사용</th><th>자산 수</th>@if (canEdit) { <th></th> }</tr></thead>
+    <tbody>
+    @foreach (var l in Model)
+    {
+        <tr class="@(l.IsActive ? "" : "text-muted")">
+            <td>@l.Name</td><td>@l.Building</td><td>@l.Floor</td><td>@l.Room</td><td>@(l.IsActive ? "Y" : "N")</td>
+            <td><a asp-controller="Assets" asp-action="Index" asp-route-locationId="@l.Id">@l.Assets.Count</a></td>
+            @if (canEdit)
+            {
+                <td class="w-1">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@l.Id">수정</a>
+                    @if (isAdmin && l.Assets.Count == 0) { <partial name="_ConfirmDelete" model="@(("Locations", (object)l.Id, l.Name))" /> }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table></div>

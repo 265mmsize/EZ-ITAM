@@ -1,0 +1,11 @@
+@model SoftwareLicense
+@{ ViewData["Title"] = "라이선스 등록"; }
+<partial name="_PageHeader" model="@("라이선스 등록")" />
+<div class="card" style="max-width:800px"><div class="card-body">
+    <form asp-action="Create" method="post" data-once>
+        <partial name="_Form" model="Model" />
+        <button type="submit" class="btn btn-primary">등록</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

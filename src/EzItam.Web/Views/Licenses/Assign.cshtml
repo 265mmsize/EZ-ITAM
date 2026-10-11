@@ -1,0 +1,25 @@
+@model LicenseAssignViewModel
+@{ ViewData["Title"] = "라이선스 할당"; }
+<partial name="_PageHeader" model="@($"라이선스 할당 - {Model.LicenseName}")" />
+<div class="card" style="max-width:560px"><div class="card-body">
+    <form asp-action="Assign" method="post" data-once>
+        <input type="hidden" asp-for="LicenseId" /><input type="hidden" asp-for="LicenseName" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="mb-3">
+            <label asp-for="EmployeeId" class="form-label"></label>
+            <select asp-for="EmployeeId" class="form-select" asp-items="ViewBag.Employees"><option value="">-- 선택 안 함 --</option></select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="AssetId" class="form-label"></label>
+            <select asp-for="AssetId" class="form-select" asp-items="ViewBag.Assets"><option value="">-- 선택 안 함 --</option></select>
+            <div class="form-text">사용자 또는 장비 중 하나 이상을 선택하세요.</div>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Notes" class="form-label"></label>
+            <input asp-for="Notes" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-success">할당</button>
+        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.LicenseId">취소</a>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,52 @@
+@model PagedResult<AuditLog>
+@{
+    ViewData["Title"] = "변경 이력";
+    var entities = ViewBag.Entities as List<string> ?? new();
+    string? entity = ViewBag.Entity; string? user = ViewBag.User; DateTime? from = ViewBag.From; DateTime? to = ViewBag.To;
+    string PageUrl(int p) => Url.Action("Index", new { entity, user, from = from?.ToString("yyyy-MM-dd"), to = to?.ToString("yyyy-MM-dd"), page = p })!;
+}
+<partial name="_PageHeader" model="@("변경 이력 (감사 로그)")" />
+<div class="card mb-3"><div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-2"><label class="form-label small mb-0">대상</label>
+            <select name="entity" class="form-select form-select-sm"><option value="">전체</option>@foreach (var e in entities) { <option value="@e" selected="@(e == entity)">@e</option> }</select></div>
+        <div class="col-md-2"><label class="form-label small mb-0">사용자</label><input name="user" value="@user" class="form-control form-control-sm" /></div>
+        <div class="col-md-2"><label class="form-label small mb-0">시작일</label><input name="from" type="date" value="@from?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></div>
+        <div class="col-md-2"><label class="form-label small mb-0">종료일</label><input name="to" type="date" value="@to?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></div>
+        <div class="col-md-2 d-flex gap-1"><button class="btn btn-sm btn-primary">조회</button><a class="btn btn-sm btn-outline-secondary" asp-action="Index">초기화</a></div>
+    </form>
+</div></div>
+<div class="card">
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr><th>일시</th><th>대상</th><th>키</th><th>작업</th><th>사용자</th><th>변경 내용</th></tr></thead>
+        <tbody>
+        @foreach (var l in Model.Items)
+        {
+            <tr>
+                <td class="w-1">@l.Timestamp.Ymdhm()</td>
+                <td class="w-1">@l.EntityName</td>
+                <td class="w-1">
+                    @if (l.EntityName == nameof(Asset)) { <a asp-controller="Assets" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
+                    else if (l.EntityName == nameof(Employee)) { <a asp-controller="Employees" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
+                    else if (l.EntityName == nameof(SoftwareLicense)) { <a asp-controller="Licenses" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
+                    else { @l.EntityKey }
+                </td>
+                <td class="w-1"><span class="badge @(l.Action == AuditAction.Created ? "bg-success" : l.Action == AuditAction.Deleted ? "bg-danger" : "bg-secondary")">@l.Action</span></td>
+                <td class="w-1">@l.UserName</td>
+                <td class="text-break"><partial name="_AuditChanges" model="l.Changes" /></td>
+            </tr>
+        }
+        @if (Model.Items.Count == 0) { <tr><td colspan="6" class="text-center text-muted py-4">이력이 없습니다.</td></tr> }
+        </tbody>
+    </table></div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="small text-muted">총 @Model.TotalCount.ToString("#,##0")건 · @Model.Page / @Model.TotalPages 페이지</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPrevious ? "" : "disabled")"><a class="page-link" href="@PageUrl(Model.Page - 1)">이전</a></li>
+                <li class="page-item @(Model.HasNext ? "" : "disabled")"><a class="page-link" href="@PageUrl(Model.Page + 1)">다음</a></li>
+            </ul>
+        </div>
+    }
+</div>

@@ -1,0 +1,25 @@
+@model List<AssetCategory>
+@{ ViewData["Title"] = "자산 분류"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">자산 분류</h1>
+    @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 분류 등록</a> }
+</div>
+<div class="card"><table class="table table-sm table-hover mb-0">
+    <thead class="table-light"><tr><th>코드</th><th>분류명</th><th>설명</th><th>감가상각(월)</th><th>자산 수</th>@if (canEdit) { <th></th> }</tr></thead>
+    <tbody>
+    @foreach (var c in Model)
+    {
+        <tr>
+            <td class="w-1"><code>@c.Code</code></td><td>@c.Name</td><td class="text-muted">@c.Description</td><td>@c.DepreciationMonths</td>
+            <td><a asp-controller="Assets" asp-action="Index" asp-route-categoryId="@c.Id">@c.Assets.Count</a></td>
+            @if (canEdit)
+            {
+                <td class="w-1">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@c.Id">수정</a>
+                    @if (isAdmin && c.Assets.Count == 0) { <partial name="_ConfirmDelete" model="@(("Categories", (object)c.Id, c.Name))" /> }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table></div>

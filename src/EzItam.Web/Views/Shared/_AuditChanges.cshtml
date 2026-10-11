@@ -1,0 +1,17 @@
+@model string?
+@{ var lines = AuditChangeFormatter.Parse(Model); }
+@if (lines.Count == 0) { <span class="text-muted">-</span> }
+else
+{
+    <ul class="list-unstyled mb-0 small">
+    @foreach (var l in lines.Take(12))
+    {
+        <li><span class="text-muted">@l.Property:</span>
+            @if (l.Old is not null && l.New is not null) { <s class="text-muted">@l.Old</s> <text>→</text> <strong>@l.New</strong> }
+            else if (l.New is not null) { <strong>@l.New</strong> }
+            else { <s class="text-muted">@l.Old</s> }
+        </li>
+    }
+    @if (lines.Count > 12) { <li class="text-muted">… 외 @(lines.Count - 12)개 항목</li> }
+    </ul>
+}

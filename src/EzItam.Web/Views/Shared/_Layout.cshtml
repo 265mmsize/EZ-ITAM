@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] is null ? "" : ViewData["Title"] + " - ")EZ-ITAM</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
+    var isAdmin = User.IsInRole("Admin");
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(params string[] names) => names.Contains(controller) ? "active" : "";
+}
+@if (isAuthenticated)
+{
+<div class="app-shell">
+    <nav class="sidebar d-flex flex-column">
+        <a class="brand" asp-controller="Home" asp-action="Index">
+            <span class="brand-mark">EZ</span><span class="brand-text">ITAM</span>
+        </a>
+        <ul class="nav flex-column">
+            <li class="nav-section">자산</li>
+            <li><a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index">대시보드</a></li>
+            <li><a class="nav-link @Active("Assets")" asp-controller="Assets" asp-action="Index">하드웨어 자산</a></li>
+            <li><a class="nav-link @Active("Licenses")" asp-controller="Licenses" asp-action="Index">소프트웨어 라이선스</a></li>
+            <li><a class="nav-link @Active("Maintenance")" asp-controller="Maintenance" asp-action="Index">유지보수</a></li>
+            <li class="nav-section">조직</li>
+            <li><a class="nav-link @Active("Employees")" asp-controller="Employees" asp-action="Index">사원</a></li>
+            <li><a class="nav-link @Active("Departments")" asp-controller="Departments" asp-action="Index">부서</a></li>
+            <li class="nav-section">기준정보</li>
+            <li><a class="nav-link @Active("Categories")" asp-controller="Categories" asp-action="Index">자산 분류</a></li>
+            <li><a class="nav-link @Active("Locations")" asp-controller="Locations" asp-action="Index">위치</a></li>
+            <li><a class="nav-link @Active("Vendors")" asp-controller="Vendors" asp-action="Index">공급업체</a></li>
+            <li class="nav-section">시스템</li>
+            <li><a class="nav-link @Active("Audit")" asp-controller="Audit" asp-action="Index">변경 이력</a></li>
+            @if (isAdmin)
+            {
+                <li><a class="nav-link @Active("Erp")" asp-controller="Erp" asp-action="Index">ERP 연동</a></li>
+                <li><a class="nav-link @Active("Users")" asp-controller="Users" asp-action="Index">사용자 관리</a></li>
+            }
+        </ul>
+        <div class="mt-auto sidebar-footer">
+            <div class="small text-truncate">@User.Identity!.Name</div>
+            <div class="small text-muted">@(isAdmin ? "관리자" : canEdit ? "담당자" : "조회자")</div>
+            <div class="d-flex gap-2 mt-2">
+                <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="ChangePassword">비밀번호</a>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-light">로그아웃</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    <main class="content">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+</div>
+}
+else
+{
+    <main class="container py-5">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+}
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,11 @@
+@model Asset
+@{ ViewData["Title"] = "자산 등록"; }
+<partial name="_PageHeader" model="@("자산 등록")" />
+<form asp-action="Create" method="post" data-once>
+    <partial name="_Form" model="Model" />
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">등록</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+    </div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

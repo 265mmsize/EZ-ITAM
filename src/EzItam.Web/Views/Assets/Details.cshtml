@@ -1,0 +1,164 @@
+@model Asset
+@{
+    ViewData["Title"] = Model.AssetTag;
+    var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
+    var isAdmin = User.IsInRole("Admin");
+    var logs = ViewBag.AuditLogs as List<AuditLog> ?? new();
+}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <a class="small text-muted" asp-action="Index">← 자산 목록</a>
+        <h1 class="h4 mb-0">@Model.AssetTag <span class="text-muted fw-normal">@Model.Name</span> @Model.Status.StatusBadge()</h1>
+    </div>
+    @if (canEdit)
+    {
+        <div class="d-flex flex-wrap gap-2">
+            @if (Model.Status == AssetStatus.Assigned)
+            {
+                <a class="btn btn-sm btn-warning" asp-action="CheckIn" asp-route-id="@Model.Id">반납</a>
+            }
+            else if (Model.Status is not (AssetStatus.Disposed or AssetStatus.Lost))
+            {
+                <a class="btn btn-sm btn-success" asp-action="CheckOut" asp-route-id="@Model.Id">불출</a>
+            }
+            @if (Model.Status != AssetStatus.Assigned)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-action="ChangeStatus" asp-route-id="@Model.Id">상태변경</a>
+            }
+            <a class="btn btn-sm btn-outline-secondary" asp-controller="Maintenance" asp-action="Create" asp-route-assetId="@Model.Id">유지보수 등록</a>
+            <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@Model.Id">수정</a>
+            @if (isAdmin) { <partial name="_ConfirmDelete" model="@(("Assets", (object)Model.Id, Model.AssetTag))" /> }
+        </div>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100"><div class="card-header">기본 정보</div><div class="card-body">
+            <dl class="dl-grid">
+                <dt>분류</dt><dd>@Model.Category?.Name</dd>
+                <dt>제조사 / 모델</dt><dd>@Model.Manufacturer @Model.Model</dd>
+                <dt>시리얼번호</dt><dd>@(Model.SerialNumber ?? "-")</dd>
+                <dt>위치</dt><dd>@(Model.Location?.FullName ?? "-")</dd>
+                <dt>현재 사용자</dt>
+                <dd>
+                    @if (Model.CurrentEmployee is not null)
+                    {
+                        <a asp-controller="Employees" asp-action="Details" asp-route-id="@Model.CurrentEmployeeId">@Model.CurrentEmployee.DisplayName</a>
+                        <span class="text-muted">@Model.CurrentEmployee.Department?.Name</span>
+                    }
+                    else { <span>-</span> }
+                </dd>
+                <dt>호스트명</dt><dd>@(Model.HostName ?? "-")</dd>
+                <dt>IP / MAC</dt><dd>@(Model.IpAddress ?? "-") / @(Model.MacAddress ?? "-")</dd>
+                <dt>운영체제</dt><dd>@(Model.OperatingSystem ?? "-")</dd>
+            </dl>
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100"><div class="card-header">구매 / 보증 / 자산가치</div><div class="card-body">
+            <dl class="dl-grid">
+                <dt>공급업체</dt><dd>@(Model.Vendor?.Name ?? "-")</dd>
+                <dt>구매일</dt><dd>@Model.PurchaseDate.Ymd()</dd>
+                <dt>구매가격</dt><dd>@Model.PurchasePrice.Money()</dd>
+                <dt>현재 장부가액</dt><dd>@Model.CurrentBookValue().Money() <span class="text-muted small">(정액법 @(Model.Category?.DepreciationMonths)개월)</span></dd>
+                <dt>보증만료일</dt>
+                <dd class="@(Model.IsWarrantyExpired ? "text-danger" : Model.IsWarrantyExpiringSoon ? "text-warning fw-bold" : "")">
+                    @Model.WarrantyExpiry.Ymd()
+                    @if (Model.IsWarrantyExpired) { <span class="badge bg-danger">만료</span> }
+                    else if (Model.IsWarrantyExpiringSoon) { <span class="badge bg-warning text-dark">임박</span> }
+                </dd>
+                <dt>ERP 고정자산번호</dt><dd>@(Model.ErpAssetNumber ?? "-")</dd>
+                <dt>등록</dt><dd>@Model.CreatedAt.Ymdhm() <span class="text-muted">@Model.CreatedBy</span></dd>
+                <dt>최종수정</dt><dd>@Model.UpdatedAt.Ymdhm() <span class="text-muted">@Model.UpdatedBy</span></dd>
+            </dl>
+        </div></div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+    {
+        <div class="col-12"><div class="card"><div class="card-header">비고</div><div class="card-body" style="white-space:pre-wrap">@Model.Notes</div></div></div>
+    }
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">불출 / 반납 이력</div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>사용자</th><th>불출</th><th>반납</th><th>처리자</th><th>비고</th></tr></thead>
+                <tbody>
+                @foreach (var x in Model.Assignments)
+                {
+                    <tr class="@(x.IsOpen ? "table-primary" : "")">
+                        <td>@x.Employee?.DisplayName</td>
+                        <td>@x.AssignedAt.Ymdhm()</td>
+                        <td>@(x.ReturnedAt.HasValue ? x.ReturnedAt.Ymdhm() : "사용중")</td>
+                        <td class="small text-muted">@x.AssignedBy@(x.ReturnedBy is null ? "" : " / " + x.ReturnedBy)</td>
+                        <td class="small">@x.Notes</td>
+                    </tr>
+                }
+                @if (Model.Assignments.Count == 0) { <tr><td colspan="5" class="text-muted">이력 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">유지보수 이력</div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>작업일</th><th>유형</th><th>내용</th><th>비용</th><th>업체</th><th>완료</th>@if (canEdit) { <th></th> }</tr></thead>
+                <tbody>
+                @foreach (var m in Model.MaintenanceRecords)
+                {
+                    <tr class="@(m.IsCompleted ? "" : "table-warning")">
+                        <td>@m.Date.Ymd()</td>
+                        <td>@m.Type.Display()</td>
+                        <td>@m.Description</td>
+                        <td>@m.Cost.Money()</td>
+                        <td>@(m.Vendor?.Name ?? "-")</td>
+                        <td>@(m.CompletedAt.HasValue ? m.CompletedAt.Ymd() : "진행중")</td>
+                        @if (canEdit) { <td class="w-1"><a class="btn btn-sm btn-outline-secondary" asp-controller="Maintenance" asp-action="Edit" asp-route-id="@m.Id">수정</a></td> }
+                    </tr>
+                }
+                @if (Model.MaintenanceRecords.Count == 0) { <tr><td colspan="7" class="text-muted">이력 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">설치된 소프트웨어 라이선스</div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>소프트웨어</th><th>유형</th><th>할당일</th></tr></thead>
+                <tbody>
+                @foreach (var l in Model.LicenseAssignments)
+                {
+                    <tr>
+                        <td><a asp-controller="Licenses" asp-action="Details" asp-route-id="@l.SoftwareLicenseId">@l.SoftwareLicense?.Name</a></td>
+                        <td>@l.SoftwareLicense?.LicenseType.Display()</td>
+                        <td>@l.AssignedAt.Ymd()</td>
+                    </tr>
+                }
+                @if (Model.LicenseAssignments.Count == 0) { <tr><td colspan="3" class="text-muted">할당된 라이선스 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">변경 이력 (최근 20건)</div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>일시</th><th>작업</th><th>사용자</th><th>변경내용</th></tr></thead>
+                <tbody>
+                @foreach (var l in logs)
+                {
+                    <tr>
+                        <td class="w-1">@l.Timestamp.Ymdhm()</td>
+                        <td class="w-1">@l.Action</td>
+                        <td class="w-1">@l.UserName</td>
+                        <td class="text-break" style="max-width:320px"><partial name="_AuditChanges" model="l.Changes" /></td>
+                    </tr>
+                }
+                @if (logs.Count == 0) { <tr><td colspan="4" class="text-muted">이력 없음</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

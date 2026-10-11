@@ -1,0 +1,35 @@
+@model MaintenanceRecord
+<div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+<input type="hidden" asp-for="Id" /><input type="hidden" asp-for="AssetId" />
+<div class="row">
+    <div class="col-6 mb-3">
+        <label asp-for="Type" class="form-label"></label>
+        <select asp-for="Type" class="form-select" asp-items="ViewBag.Types"></select>
+    </div>
+    <div class="col-6 mb-3">
+        <label asp-for="Date" class="form-label"></label>
+        <input asp-for="Date" class="form-control" type="date" />
+        <span asp-validation-for="Date" class="text-danger small"></span>
+    </div>
+</div>
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Description" class="text-danger small"></span>
+</div>
+<div class="row">
+    <div class="col-6 mb-3">
+        <label asp-for="Cost" class="form-label"></label>
+        <input asp-for="Cost" class="form-control" type="number" min="0" step="1" />
+        <span asp-validation-for="Cost" class="text-danger small"></span>
+    </div>
+    <div class="col-6 mb-3">
+        <label asp-for="VendorId" class="form-label"></label>
+        <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors"><option value="">-- 자체 처리 --</option></select>
+    </div>
+</div>
+<div class="mb-3">
+    <label asp-for="CompletedAt" class="form-label"></label>
+    <input asp-for="CompletedAt" class="form-control" type="date" />
+    <div class="form-text">완료일을 비워두면 '진행중'으로 관리됩니다.</div>
+</div>

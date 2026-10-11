@@ -1,0 +1,7 @@
+@* 사용: <partial name="_ConfirmDelete" model="(controller, id, label)" /> *@
+@model (string Controller, object Id, string Label)
+<form asp-controller="@Model.Controller" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline"
+      onsubmit="return confirm('@Model.Label 을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+</form>

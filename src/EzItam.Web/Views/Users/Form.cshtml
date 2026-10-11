@@ -1,0 +1,16 @@
+@model UserFormViewModel
+@{ var isNew = string.IsNullOrEmpty(Model.Id); ViewData["Title"] = isNew ? "사용자 추가" : "사용자 수정"; }
+<partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
+<div class="card" style="max-width:560px"><div class="card-body">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@Model.Id" method="post" data-once>
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="mb-3"><label asp-for="UserName" class="form-label"></label><input asp-for="UserName" class="form-control" autocomplete="off" /><span asp-validation-for="UserName" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" autocomplete="new-password" /><span asp-validation-for="Password" class="text-danger small"></span>@if (!isNew) { <div class="form-text">변경할 때만 입력하세요.</div> }</div>
+        <div class="mb-3"><label asp-for="Role" class="form-label"></label><select asp-for="Role" class="form-select" asp-items="ViewBag.Roles"></select></div>
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

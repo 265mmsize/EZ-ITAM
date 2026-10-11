@@ -1,0 +1,16 @@
+@model Department
+@{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "부서 등록" : "부서 수정"; }
+<partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
+<div class="card" style="max-width:560px"><div class="card-body">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? null : Model.Id)" method="post" data-once>
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="mb-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /><span asp-validation-for="Code" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="ErpOrganizationId" class="form-label"></label><input asp-for="ErpOrganizationId" class="form-control" type="number" /><div class="form-text">Oracle EBS HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID (ERP 동기화 시 자동 설정)</div></div>
+        <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">취소</a>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
