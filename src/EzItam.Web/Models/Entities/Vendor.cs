@@ -28,9 +28,6 @@ public class Vendor
     [Display(Name = "비고")]
     public string? Notes { get; set; }
 
-    /// <summary>Oracle EBS AP_SUPPLIERS.VENDOR_ID</summary>
-    [Display(Name = "ERP 공급업체 ID")]
-    public long? ErpVendorId { get; set; }
 
     public ICollection<Asset> Assets { get; set; } = new List<Asset>();
     public ICollection<SoftwareLicense> Licenses { get; set; } = new List<SoftwareLicense>();

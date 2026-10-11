@@ -29,9 +29,6 @@ public class Employee
     public int? DepartmentId { get; set; }
     public Department? Department { get; set; }
 
-    /// <summary>Oracle EBS PER_ALL_PEOPLE_F.PERSON_ID</summary>
-    [Display(Name = "ERP 사원 ID")]
-    public long? ErpPersonId { get; set; }
 
     [Display(Name = "재직")]
     public bool IsActive { get; set; } = true;

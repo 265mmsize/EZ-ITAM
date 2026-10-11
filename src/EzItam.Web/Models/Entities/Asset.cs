@@ -77,10 +77,6 @@ public class Asset
     [Display(Name = "운영체제")]
     public string? OperatingSystem { get; set; }
 
-    /// <summary>Oracle EBS FA_ADDITIONS_B.ASSET_NUMBER (고정자산 번호)</summary>
-    [StringLength(30)]
-    [Display(Name = "ERP 고정자산번호")]
-    public string? ErpAssetNumber { get; set; }
 
     [StringLength(2000)]
     [Display(Name = "비고")]

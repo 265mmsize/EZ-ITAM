@@ -87,7 +87,7 @@ public class EmployeesController : BaseController
         var item = await _db.Employees.FindAsync(new object[] { id }, ct);
         if (item is null) return NotFound();
         item.EmployeeNo = model.EmployeeNo; item.Name = model.Name; item.Email = model.Email; item.Title = model.Title;
-        item.DepartmentId = model.DepartmentId; item.ErpPersonId = model.ErpPersonId; item.IsActive = model.IsActive;
+        item.DepartmentId = model.DepartmentId; item.IsActive = model.IsActive;
         await _db.SaveChangesAsync(ct);
         Success("사원 정보가 저장되었습니다.");
         return RedirectToAction(nameof(Details), new { id });

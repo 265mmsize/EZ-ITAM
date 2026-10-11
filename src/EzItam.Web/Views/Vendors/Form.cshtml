@@ -11,7 +11,6 @@
             <div class="col-6 mb-3"><label asp-for="Phone" class="form-label"></label><input asp-for="Phone" class="form-control" /></div>
         </div>
         <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
-        <div class="mb-3"><label asp-for="ErpVendorId" class="form-label"></label><input asp-for="ErpVendorId" class="form-control" type="number" /><div class="form-text">Oracle EBS AP_SUPPLIERS.VENDOR_ID</div></div>
         <div class="mb-3"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="2"></textarea></div>
         <button type="submit" class="btn btn-primary">저장</button>
         <a class="btn btn-outline-secondary" asp-action="Index">취소</a>

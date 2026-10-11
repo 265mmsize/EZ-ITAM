@@ -47,7 +47,7 @@ public class DepartmentsController : BaseController
         if (!ModelState.IsValid) return View("Form", model);
         var item = await _db.Departments.FindAsync(new object[] { id }, ct);
         if (item is null) return NotFound();
-        item.Code = model.Code; item.Name = model.Name; item.ErpOrganizationId = model.ErpOrganizationId; item.IsActive = model.IsActive;
+        item.Code = model.Code; item.Name = model.Name; item.IsActive = model.IsActive;
         await _db.SaveChangesAsync(ct);
         Success("부서가 저장되었습니다.");
         return RedirectToAction(nameof(Index));

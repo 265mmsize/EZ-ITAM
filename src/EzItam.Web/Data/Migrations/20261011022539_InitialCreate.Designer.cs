@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EzItam.Web.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261011013916_InitialCreate")]
+    [Migration("20261011022539_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -50,10 +50,6 @@ namespace EzItam.Web.Data.Migrations
 
                     b.Property<int?>("CurrentEmployeeId")
                         .HasColumnType("int");
-
-                    b.Property<string>("ErpAssetNumber")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("HostName")
                         .HasMaxLength(100)
@@ -264,9 +260,6 @@ namespace EzItam.Web.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<long?>("ErpOrganizationId")
-                        .HasColumnType("bigint");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -279,8 +272,6 @@ namespace EzItam.Web.Data.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
-
-                    b.HasIndex("ErpOrganizationId");
 
                     b.ToTable("Departments", (string)null);
                 });
@@ -305,9 +296,6 @@ namespace EzItam.Web.Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<long?>("ErpPersonId")
-                        .HasColumnType("bigint");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -326,8 +314,6 @@ namespace EzItam.Web.Data.Migrations
 
                     b.HasIndex("EmployeeNo")
                         .IsUnique();
-
-                    b.HasIndex("ErpPersonId");
 
                     b.ToTable("Employees", (string)null);
                 });
@@ -528,9 +514,6 @@ namespace EzItam.Web.Data.Migrations
                     b.Property<string>("Email")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
-
-                    b.Property<long?>("ErpVendorId")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("Name")
                         .IsRequired()

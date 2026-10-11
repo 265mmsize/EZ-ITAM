@@ -4,8 +4,8 @@
 
 - **ASP.NET Core 8 MVC** (C#) · **Entity Framework Core 8** · **MS SQL Server**
 - **ASP.NET Core Identity** 로그인 / 역할(Admin · Manager · Viewer) 기반 권한
-- **Oracle EBS 11i 연동**: HR 조직·사원 마스터를 ITAM 부서·사원으로 동기화 (ODP.NET Core)
 - 한국어 UI, Bootstrap 5
+- ERP(Oracle EBS) 연동은 범위에서 제외했습니다.
 
 ## 주요 기능
 
@@ -18,7 +18,6 @@
 | 소프트웨어 라이선스 | 라이선스 유형(Per Seat/Per Device/구독/사이트), 보유·사용 수량, 사용자/장비 할당·해제, 초과 할당 방지 |
 | 조직 / 기준정보 | 사원, 부서, 자산 분류, 위치, 공급업체 CRUD |
 | 변경 이력 | 모든 자산·조직·라이선스 변경 사항을 사용자·시각·이전/이후 값으로 자동 기록 (감사 로그) |
-| ERP 연동 | Oracle EBS 11i 에서 부서·사원 동기화(업서트, 퇴직 처리) — 관리자 메뉴 |
 | 사용자 관리 | 계정 생성, 권한 변경, 비밀번호 초기화, 잠금 해제 — 관리자 메뉴 |
 
 ### 권한
@@ -27,7 +26,7 @@
 |---|---|
 | Viewer | 조회만 |
 | Manager | 자산/라이선스/유지보수/기준정보 등록·수정, 불출·반납·할당 |
-| Admin | Manager 권한 + 삭제, ERP 연동, 사용자 관리 |
+| Admin | Manager 권한 + 삭제, 사용자 관리 |
 
 ## 프로젝트 구조
 
@@ -38,7 +37,6 @@ EZ-ITAM.sln
 │  ├─ Data/                     AppDbContext(감사 로그 자동 기록), 시드, EF 마이그레이션
 │  ├─ Models/Entities/          엔티티 (Asset, Employee, SoftwareLicense …)
 │  ├─ Services/                 AssetService, LicenseService, DashboardService, CSV
-│  ├─ Services/Erp/             Oracle EBS 연동 (IErpDirectorySource, ErpSyncService)
 │  ├─ ViewModels/, Views/, wwwroot/
 │  └─ appsettings*.json
 ├─ tests/EzItam.Tests/          xUnit 단위 테스트 (SQLite in-memory)
@@ -95,26 +93,6 @@ docker compose up --build
 # http://localhost:8080  (admin / Admin!2345)
 ```
 
-## Oracle EBS 11i 연동 설정
-
-`appsettings.json` (또는 환경 변수 / User Secrets) 에 아래 항목을 설정하면 관리자 메뉴 **ERP 연동** 에서 동기화를 실행할 수 있습니다.
-
-```json
-"OracleEbs": {
-  "Enabled": true,
-  "ConnectionString": "User Id=apps;Password=***;Data Source=//ebs-db:1521/PROD",
-  "DeactivateMissingEmployees": true,
-  "CommandTimeoutSeconds": 120
-}
-```
-
-- 기본 조회 SQL 은 `HR_ALL_ORGANIZATION_UNITS`, `PER_ALL_PEOPLE_F`, `PER_ALL_ASSIGNMENTS_F`, `PER_JOBS` 를 사용합니다.
-  사이트별 커스터마이징이 필요하면 `OracleEbs:DepartmentQuery`, `OracleEbs:EmployeeQuery` 로 SQL 을 덮어쓸 수 있습니다.
-  (컬럼 별칭 `ORGANIZATION_ID, ORG_CODE, ORG_NAME, ACTIVE_FLAG` / `PERSON_ID, EMPLOYEE_NUMBER, FULL_NAME, EMAIL_ADDRESS, JOB_NAME, ORGANIZATION_ID, ACTIVE_FLAG` 유지)
-- 부서는 `ERP 조직 ID` 또는 부서코드, 사원은 `ERP 사원 ID` 또는 사번으로 매칭하여 업서트합니다.
-- ERP 조회 결과에 없는(ERP 연동으로 생성된) 사원은 퇴직 처리됩니다. 끄려면 `DeactivateMissingEmployees: false`.
-- 자산의 **ERP 고정자산번호** 필드에 `FA_ADDITIONS_B.ASSET_NUMBER` 를 기록해 고정자산 대장과 대사할 수 있습니다.
-- 운영 환경에서는 비밀번호를 설정 파일에 두지 말고 환경 변수(`OracleEbs__ConnectionString`) 또는 User Secrets 를 사용하세요.
 
 ## 설정 항목 요약
 
@@ -125,8 +103,6 @@ docker compose up --build
 | `Database:AutoMigrate` | 시작 시 마이그레이션·시드 적용 | true |
 | `Seed:AdminUser` / `Seed:AdminPassword` | 최초 관리자 계정 | admin / Admin!2345 |
 | `Seed:SampleData` | 샘플 데이터 생성 | false (Development: true) |
-| `OracleEbs:*` | ERP 연동 | Enabled=false |
-
 ## 라이선스 / 기타
 
 사내 사용 목적의 프로젝트입니다. 기여·이슈는 GitHub 저장소를 이용해 주세요.

@@ -14,7 +14,6 @@
             <div class="col-6 mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /></div>
         </div>
         <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
-        <div class="mb-3"><label asp-for="ErpPersonId" class="form-label"></label><input asp-for="ErpPersonId" class="form-control" type="number" /><div class="form-text">Oracle EBS PER_ALL_PEOPLE_F.PERSON_ID (ERP 동기화 시 자동 설정)</div></div>
         <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
         <button type="submit" class="btn btn-primary">저장</button>
         <a class="btn btn-outline-secondary" asp-action="Index">취소</a>

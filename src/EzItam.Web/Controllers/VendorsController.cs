@@ -41,7 +41,7 @@ public class VendorsController : BaseController
         if (!ModelState.IsValid) return View("Form", model);
         var item = await _db.Vendors.FindAsync(new object[] { id }, ct);
         if (item is null) return NotFound();
-        item.Name = model.Name; item.ContactName = model.ContactName; item.Phone = model.Phone; item.Email = model.Email; item.Notes = model.Notes; item.ErpVendorId = model.ErpVendorId;
+        item.Name = model.Name; item.ContactName = model.ContactName; item.Phone = model.Phone; item.Email = model.Email; item.Notes = model.Notes;
         await _db.SaveChangesAsync(ct);
         Success("공급업체가 저장되었습니다.");
         return RedirectToAction(nameof(Index));

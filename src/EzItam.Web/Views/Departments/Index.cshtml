@@ -5,12 +5,12 @@
     @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 부서 등록</a> }
 </div>
 <div class="card"><table class="table table-sm table-hover mb-0">
-    <thead class="table-light"><tr><th>부서코드</th><th>부서명</th><th>ERP 조직 ID</th><th>사용</th><th>사원 수</th>@if (canEdit) { <th></th> }</tr></thead>
+    <thead class="table-light"><tr><th>부서코드</th><th>부서명</th><th>사용</th><th>사원 수</th>@if (canEdit) { <th></th> }</tr></thead>
     <tbody>
     @foreach (var d in Model)
     {
         <tr class="@(d.IsActive ? "" : "text-muted")">
-            <td class="w-1"><code>@d.Code</code></td><td>@d.Name</td><td>@(d.ErpOrganizationId?.ToString() ?? "-")</td><td>@(d.IsActive ? "Y" : "N")</td>
+            <td class="w-1"><code>@d.Code</code></td><td>@d.Name</td><td>@(d.IsActive ? "Y" : "N")</td>
             <td><a asp-controller="Employees" asp-action="Index" asp-route-departmentId="@d.Id">@d.Employees.Count(e => e.IsActive)</a></td>
             @if (canEdit)
             {

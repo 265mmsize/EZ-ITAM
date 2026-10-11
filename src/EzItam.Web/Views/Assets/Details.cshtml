@@ -68,7 +68,6 @@
                     @if (Model.IsWarrantyExpired) { <span class="badge bg-danger">만료</span> }
                     else if (Model.IsWarrantyExpiringSoon) { <span class="badge bg-warning text-dark">임박</span> }
                 </dd>
-                <dt>ERP 고정자산번호</dt><dd>@(Model.ErpAssetNumber ?? "-")</dd>
                 <dt>등록</dt><dd>@Model.CreatedAt.Ymdhm() <span class="text-muted">@Model.CreatedBy</span></dd>
                 <dt>최종수정</dt><dd>@Model.UpdatedAt.Ymdhm() <span class="text-muted">@Model.UpdatedBy</span></dd>
             </dl>

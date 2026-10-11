@@ -1,7 +1,6 @@
 using System.Globalization;
 using EzItam.Web.Data;
 using EzItam.Web.Services;
-using EzItam.Web.Services.Erp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
@@ -63,9 +62,6 @@ builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.Configure<OracleEbsOptions>(builder.Configuration.GetSection(OracleEbsOptions.SectionName));
-builder.Services.AddScoped<IErpDirectorySource, OracleEbsDirectorySource>();
-builder.Services.AddScoped<IErpSyncService, ErpSyncService>();
 
 builder.Services.AddControllersWithViews(options =>
 {

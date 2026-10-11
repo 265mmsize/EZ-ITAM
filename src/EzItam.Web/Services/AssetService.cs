@@ -167,7 +167,6 @@ public class AssetService : IAssetService
         asset.MacAddress = input.MacAddress;
         asset.HostName = input.HostName;
         asset.OperatingSystem = input.OperatingSystem;
-        asset.ErpAssetNumber = input.ErpAssetNumber;
         asset.Notes = input.Notes;
 
         await _db.SaveChangesAsync(ct);

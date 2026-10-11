@@ -52,7 +52,6 @@ public class AssetsController : BaseController
             ("IP", a => a.IpAddress),
             ("MAC", a => a.MacAddress),
             ("OS", a => a.OperatingSystem),
-            ("ERP고정자산번호", a => a.ErpAssetNumber),
             ("비고", a => a.Notes));
         return File(bytes, "text/csv; charset=utf-8", $"assets_{DateTime.Now:yyyyMMdd_HHmm}.csv");
     }

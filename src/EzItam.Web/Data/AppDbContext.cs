@@ -57,14 +57,12 @@ public class AppDbContext : IdentityDbContext
         {
             e.ToTable("Departments");
             e.HasIndex(d => d.Code).IsUnique();
-            e.HasIndex(d => d.ErpOrganizationId);
         });
 
         builder.Entity<Employee>(e =>
         {
             e.ToTable("Employees");
             e.HasIndex(emp => emp.EmployeeNo).IsUnique();
-            e.HasIndex(emp => emp.ErpPersonId);
             e.HasOne(emp => emp.Department).WithMany(d => d.Employees).HasForeignKey(emp => emp.DepartmentId).OnDelete(DeleteBehavior.SetNull);
         });
 

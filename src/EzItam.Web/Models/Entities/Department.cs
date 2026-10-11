@@ -16,9 +16,6 @@ public class Department
     [Display(Name = "부서명")]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>Oracle EBS HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID</summary>
-    [Display(Name = "ERP 조직 ID")]
-    public long? ErpOrganizationId { get; set; }
 
     [Display(Name = "사용")]
     public bool IsActive { get; set; } = true;

@@ -24,8 +24,6 @@ services:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__Default: "Server=mssql,1433;Database=EzItam;User Id=sa;Password=EzItam!Str0ngPass;TrustServerCertificate=True;MultipleActiveResultSets=true"
       Seed__SampleData: "true"
-      # OracleEbs__Enabled: "true"
-      # OracleEbs__ConnectionString: "User Id=apps;Password=***;Data Source=//ebs-db:1521/PROD"
     ports:
       - "8080:8080"
 
