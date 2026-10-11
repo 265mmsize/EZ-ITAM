@@ -20,7 +20,6 @@ public sealed class AgentWorker : BackgroundService
     private readonly AgentHistoryStore _history;
     private readonly IInventoryCollector _collector;
     private readonly AgentUpdater _updater;
-    private readonly AgentHistoryStore _history;
     private readonly ILogger<AgentWorker> _logger;
 
     /// <summary>이번에 발견한 업데이트를 적용해도 되는 시각(무작위 지연 적용)</summary>
@@ -33,7 +32,6 @@ public sealed class AgentWorker : BackgroundService
         AgentHistoryStore history,
         IInventoryCollector collector,
         AgentUpdater updater,
-        AgentHistoryStore history,
         ILogger<AgentWorker> logger)
     {
         _options = options.Value;
@@ -42,7 +40,6 @@ public sealed class AgentWorker : BackgroundService
         _history = history;
         _collector = collector;
         _updater = updater;
-        _history = history;
         _logger = logger;
     }
 
