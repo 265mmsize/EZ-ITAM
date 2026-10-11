@@ -11,7 +11,9 @@ namespace EzItam.Agent.Transport;
 /// <summary>서버 인증 실패(토큰 폐기, 재등록 필요)를 알리는 예외</summary>
 public sealed class AgentUnauthorizedException : Exception
 {
-    public AgentUnauthorizedException() : base("서버가 에이전트 인증을 거부했습니다.") { }
+    public bool DuringEnroll { get; }
+    public AgentUnauthorizedException(bool duringEnroll = false) : base("서버가 에이전트 인증을 거부했습니다.")
+        => DuringEnroll = duringEnroll;
 }
 
 public sealed class AgentApiClient
@@ -23,7 +25,9 @@ public sealed class AgentApiClient
     public AgentApiClient(HttpClient http, IOptions<AgentOptions> options)
     {
         _http = http;
-        _http.BaseAddress = new Uri(options.Value.ServerUrl);
+        var url = options.Value.ServerUrl.Trim();
+        if (!url.EndsWith('/')) url += "/"; // 가상 디렉터리 아래에 배포해도 상대 경로가 올바르게 붙도록 합니다.
+        _http.BaseAddress = new Uri(url);
         _http.Timeout = TimeSpan.FromSeconds(60);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("EzItamAgent", AgentOptions.AgentVersion));
     }
@@ -31,7 +35,7 @@ public sealed class AgentApiClient
     public async Task<EnrollResponse> EnrollAsync(EnrollRequest request, CancellationToken ct)
     {
         using var resp = await _http.PostAsJsonAsync("api/agent/enroll", request, JsonOptions, ct);
-        if (resp.StatusCode == HttpStatusCode.Unauthorized) throw new AgentUnauthorizedException();
+        if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden) throw new AgentUnauthorizedException(duringEnroll: true);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<EnrollResponse>(JsonOptions, ct))!;
     }

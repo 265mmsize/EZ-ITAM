@@ -3,7 +3,6 @@
     ViewData["Title"] = Model.HostName;
     var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
     var software = ViewBag.Software as List<AgentSoftware> ?? new();
-    var assets = ViewBag.Assets as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
 }
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
@@ -59,7 +58,7 @@
             {
                 <form asp-action="Link" asp-route-id="@Model.Id" method="post" class="row g-2 align-items-end">
                     @Html.AntiForgeryToken()
-                    <div class="col-md-8"><select name="assetId" class="form-select form-select-sm" asp-items="assets"><option value="">-- 연결 해제 --</option></select></div>
+                    <div class="col-md-8"><select name="assetId" class="form-select form-select-sm" asp-items="ViewBag.Assets"><option value="">-- 연결 해제 --</option></select></div>
                     <div class="col-md-4"><button class="btn btn-sm btn-primary">연결 저장</button></div>
                 </form>
             }

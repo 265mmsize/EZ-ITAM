@@ -22,8 +22,9 @@ public sealed class WindowsInventoryCollector : IInventoryCollector
         var os = FirstObject("SELECT Caption, Version, BuildNumber FROM Win32_OperatingSystem");
         var bios = FirstString("SELECT SerialNumber FROM Win32_BIOS", "SerialNumber");
 
-        var cpu = QueryRows("SELECT Name, NumberOfCores FROM Win32_Processor").FirstOrDefault();
-        var cores = QueryRows("SELECT NumberOfCores FROM Win32_Processor").Sum(r => ToInt(r["NumberOfCores"]));
+        var cpus = QueryRows("SELECT Name, NumberOfCores FROM Win32_Processor");
+        var cpu = cpus.FirstOrDefault();
+        var cores = cpus.Sum(r => ToInt(r["NumberOfCores"]));
 
         var nics = QueryRows("SELECT MACAddress, IPAddress FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = TRUE").ToList();
         var macs = nics.Select(n => n["MACAddress"]?.ToString()).Where(m => !string.IsNullOrWhiteSpace(m)).Select(m => m!).ToArray();
@@ -40,7 +41,7 @@ public sealed class WindowsInventoryCollector : IInventoryCollector
             Model: cs?["Model"]?.ToString()?.Trim(),
             CpuName: cpu?["Name"]?.ToString()?.Trim(),
             CpuCores: cores > 0 ? cores : null,
-            TotalMemoryMb: ToLong(cs?["TotalPhysicalMemory"]) / (1024 * 1024),
+            TotalMemoryMb: cs?["TotalPhysicalMemory"] is null ? null : ToLong(cs["TotalPhysicalMemory"]) / (1024 * 1024),
             OsName: os?["Caption"]?.ToString()?.Trim(),
             OsVersion: os?["Version"]?.ToString(),
             OsBuild: os?["BuildNumber"]?.ToString(),

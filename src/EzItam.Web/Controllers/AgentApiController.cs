@@ -57,6 +57,8 @@ public class AgentApiController : ControllerBase
 
         var payload = await ReadPayloadAsync(ct);
         if (payload is null) return BadRequest(new { error = "인벤토리 본문을 읽을 수 없습니다." });
+        if (payload.Hardware is null || payload.Software is null || string.IsNullOrWhiteSpace(payload.Hardware.HostName))
+            return BadRequest(new { error = "hardware, software, hostName 은 필수입니다." });
 
         await _agents.ApplyInventoryAsync(agent, payload, ct);
         return Accepted(new { received = payload.Software.Count });
@@ -79,18 +81,25 @@ public class AgentApiController : ControllerBase
         var limited = new byte[16 * 1024];
         long total = 0;
         int read;
-        while ((read = await body.ReadAsync(limited, ct)) > 0)
+        try
         {
-            total += read;
-            if (total > MaxInventoryBytes * 4) return null;
-            await buffer.WriteAsync(limited.AsMemory(0, read), ct);
+            while ((read = await body.ReadAsync(limited, ct)) > 0)
+            {
+                total += read;
+                if (total > MaxInventoryBytes * 4) return null;
+                await buffer.WriteAsync(limited.AsMemory(0, read), ct);
+            }
+        }
+        catch (InvalidDataException)
+        {
+            return null; // 잘못된 gzip 본문
         }
         buffer.Position = 0;
         try
         {
             return await JsonSerializer.DeserializeAsync<InventoryPayload>(buffer, JsonOptions, ct);
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidDataException)
         {
             return null;
         }

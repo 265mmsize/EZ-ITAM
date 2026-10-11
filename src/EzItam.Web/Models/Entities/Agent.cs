@@ -59,7 +59,7 @@ public class Agent
     public ICollection<AgentSoftware> Software { get; set; } = new List<AgentSoftware>();
 
     [NotMapped]
-    public bool IsOnline => LastSeenAt.HasValue && LastSeenAt.Value > DateTime.UtcNow.AddMinutes(-15);
+    public bool IsOnline => Status != AgentStatus.Disabled && LastSeenAt.HasValue && LastSeenAt.Value > DateTime.Now.AddMinutes(-15);
 }
 
 /// <summary>에이전트가 보고한 설치 소프트웨어 (최신 인벤토리 기준 전체 교체)</summary>

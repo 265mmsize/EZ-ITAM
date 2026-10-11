@@ -141,5 +141,72 @@ public class AgentServiceTests : IDisposable
         Assert.Null(await Svc().AuthenticateAsync(resp.Token));
     }
 
+    [Fact]
+    public async Task Disabled_agent_cannot_re_enroll_with_shared_key()
+    {
+        var resp = await Svc().EnrollAsync(Enroll());
+        var agent = (await Svc().AuthenticateAsync(resp.Token))!;
+        await Svc().DisableAsync(agent.Id);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Svc().EnrollAsync(Enroll()));
+        Assert.Null(await Svc().AuthenticateAsync(resp.Token));
+    }
+
+    [Fact]
+    public async Task Long_agent_values_are_truncated_to_column_limits()
+    {
+        var macs = Enumerable.Range(0, 40).Select(i => $"00-11-22-33-44-{i:00}").ToArray();
+        var longText = new string('x', 500);
+        var req = new EnrollRequest("test-key", "UUID-L", longText, longText, longText, longText, longText, longText, macs, longText, longText);
+        var resp = await Svc().EnrollAsync(req);
+        await Svc().ApproveAsync((await Svc().AuthenticateAsync(resp.Token))!.Id);
+        var agent = (await Svc().AuthenticateAsync(resp.Token))!;
+        await Svc().ApplyInventoryAsync(agent, new InventoryPayload(DateTime.UtcNow,
+            new HardwareInfo("UUID-L", longText, longText, longText, longText, longText, 4, 8, longText, longText, longText, longText, macs, longText, null, null),
+            new[] { new SoftwareItem(new string('n', 400), new string('p', 400), new string('v', 400), "2026", "Registry") }));
+
+        using var db = _testDb.Create();
+        var a = await db.Agents.SingleAsync(x => x.DeviceUuid == "UUID-L");
+        Assert.True(a.MacAddresses!.Length <= 300);
+        Assert.True(a.HostName.Length <= 100 && a.CpuName!.Length <= 100 && a.OsBuild!.Length <= 20 && a.AgentVersion.Length <= 32);
+        var sw = await db.AgentSoftware.SingleAsync(x => x.AgentId == a.Id);
+        Assert.True(sw.Name.Length <= 300 && sw.Publisher!.Length <= 200 && sw.Version!.Length <= 100);
+    }
+
+    [Fact]
+    public async Task Heartbeat_and_inventory_do_not_write_audit_logs_but_admin_actions_do()
+    {
+        var resp = await Svc().EnrollAsync(Enroll());
+        var agent = (await Svc().AuthenticateAsync(resp.Token))!;
+        int Count() => _testDb.Create().AuditLogs.Count(l => l.EntityName == nameof(Agent));
+
+        await Svc().HeartbeatAsync(agent, new HeartbeatRequest("1.0.0", DateTime.UtcNow, false, "10.0.0.9"));
+        Assert.Equal(0, Count());
+
+        await Svc().ApproveAsync(agent.Id);
+        Assert.Equal(1, Count());
+
+        agent = (await Svc().AuthenticateAsync(resp.Token))!;
+        await Svc().ApplyInventoryAsync(agent, Inventory("PC-KIM", "SN-9"));
+        Assert.Equal(1, Count());
+    }
+
+    [Fact]
+    public async Task Inventory_due_is_computed_from_server_time_not_client_clock()
+    {
+        var resp = await Svc().EnrollAsync(Enroll());
+        await Svc().ApproveAsync((await Svc().AuthenticateAsync(resp.Token))!.Id);
+        var agent = (await Svc().AuthenticateAsync(resp.Token))!;
+
+        // 클라이언트 시계가 10년 앞서 있어도 서버 기준으로 "방금 수신"으로 기록되어야 합니다.
+        var skewed = Inventory("PC-KIM", "SN-1") with { CollectedAtUtc = DateTime.UtcNow.AddYears(10) };
+        await Svc().ApplyInventoryAsync(agent, skewed);
+
+        agent = (await Svc().AuthenticateAsync(resp.Token))!;
+        Assert.True(agent.LastInventoryAt <= DateTime.Now.AddMinutes(1));
+        var hb = await Svc().HeartbeatAsync(agent, new HeartbeatRequest("1.0.0", null, false, null));
+        Assert.False(hb.InventoryDue);
+    }
+
     public void Dispose() => _testDb.Dispose();
 }

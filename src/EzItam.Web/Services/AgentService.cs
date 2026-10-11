@@ -45,13 +45,16 @@ public class AgentService : IAgentService
             throw new DomainException("장치 UUID가 필요합니다.");
 
         var agent = await _db.Agents.FirstOrDefaultAsync(a => a.DeviceUuid == req.DeviceUuid, ct);
+        if (agent is not null && agent.Status == AgentStatus.Disabled)
+            throw new UnauthorizedAccessException("사용 중지된 장치입니다. 관리자가 다시 승인해야 합니다.");
+
         var isNew = agent is null;
-        agent ??= new Agent { DeviceUuid = req.DeviceUuid, EnrolledAt = DateTime.UtcNow, Status = AgentStatus.Pending };
+        agent ??= new Agent { DeviceUuid = Truncate(req.DeviceUuid, 64)!, EnrolledAt = DateTime.Now, Status = AgentStatus.Pending };
         ApplyEnrollFields(agent, req);
 
         var token = CreateToken();
         agent.TokenHash = Hash(token);
-        agent.LastSeenAt = DateTime.UtcNow;
+        agent.LastSeenAt = DateTime.Now;
 
         if (isNew) _db.Agents.Add(agent);
         await _db.SaveChangesAsync(ct);
@@ -62,45 +65,47 @@ public class AgentService : IAgentService
     {
         if (string.IsNullOrWhiteSpace(token)) return null;
         var hash = Hash(token);
-        var agent = await _db.Agents.FirstOrDefaultAsync(a => a.TokenHash == hash, ct);
-        return agent is not null && FixedEquals(agent.TokenHash!, hash) ? agent : null;
+        return await _db.Agents.FirstOrDefaultAsync(a => a.TokenHash == hash, ct);
     }
 
     public async Task<HeartbeatResponse> HeartbeatAsync(Agent agent, HeartbeatRequest req, CancellationToken ct = default)
     {
-        agent.LastSeenAt = DateTime.UtcNow;
-        agent.AgentVersion = req.AgentVersion;
+        Track(agent);
+        agent.LastSeenAt = DateTime.Now;
+        agent.AgentVersion = Truncate(req.AgentVersion, 32) ?? string.Empty;
         agent.BootTimeUtc = req.BootTimeUtc;
         agent.RebootPending = req.RebootPending;
-        if (!string.IsNullOrWhiteSpace(req.IpAddress)) agent.IpAddress = req.IpAddress;
+        if (!string.IsNullOrWhiteSpace(req.IpAddress)) agent.IpAddress = Truncate(req.IpAddress, 100);
         await _db.SaveChangesAsync(ct);
 
         var inventoryDue = agent.Status == AgentStatus.Approved
-            && (agent.LastInventoryAt is null || agent.LastInventoryAt < DateTime.UtcNow.AddHours(-InventoryIntervalHours));
+            && (agent.LastInventoryAt is null || agent.LastInventoryAt < DateTime.Now.AddHours(-InventoryIntervalHours));
         var interval = _config.GetValue("Agent:HeartbeatSeconds", DefaultHeartbeatSeconds);
         return new HeartbeatResponse(interval, inventoryDue, agent.Status.ToString());
     }
 
     public async Task ApplyInventoryAsync(Agent agent, InventoryPayload payload, CancellationToken ct = default)
     {
+        Track(agent);
         var hw = payload.Hardware;
-        agent.SerialNumber = hw.SerialNumber;
-        agent.HostName = hw.HostName;
-        agent.Manufacturer = hw.Manufacturer;
-        agent.Model = hw.Model;
-        agent.CpuName = hw.CpuName;
+        agent.SerialNumber = Truncate(hw.SerialNumber, 100);
+        agent.HostName = Truncate(hw.HostName, 100) ?? agent.HostName;
+        agent.Manufacturer = Truncate(hw.Manufacturer, 100);
+        agent.Model = Truncate(hw.Model, 100);
+        agent.CpuName = Truncate(hw.CpuName, 100);
         agent.CpuCores = hw.CpuCores;
         agent.TotalMemoryMb = hw.TotalMemoryMb;
-        agent.OsName = hw.OsName;
-        agent.OsVersion = hw.OsVersion;
-        agent.OsBuild = hw.OsBuild;
-        agent.LoggedOnUser = hw.LoggedOnUser;
-        agent.MacAddresses = string.Join(",", hw.MacAddresses);
-        agent.IpAddress = hw.IpAddress;
+        agent.OsName = Truncate(hw.OsName, 100);
+        agent.OsVersion = Truncate(hw.OsVersion, 100);
+        agent.OsBuild = Truncate(hw.OsBuild, 20);
+        agent.LoggedOnUser = Truncate(hw.LoggedOnUser, 100);
+        agent.MacAddresses = JoinMacs(hw.MacAddresses);
+        agent.IpAddress = Truncate(hw.IpAddress, 100);
         agent.BitLockerOn = hw.BitLockerOn;
         agent.DiskTotalGb = hw.DiskTotalGb;
-        agent.LastInventoryAt = payload.CollectedAtUtc;
-        agent.LastSeenAt = DateTime.UtcNow;
+        // 클라이언트 시계 오차에 영향받지 않도록 서버 시각을 기록합니다.
+        agent.LastInventoryAt = DateTime.Now;
+        agent.LastSeenAt = DateTime.Now;
 
         // 설치 소프트웨어는 최신 인벤토리 기준으로 전체 교체합니다.
         var old = await _db.AgentSoftware.Where(s => s.AgentId == agent.Id).ToListAsync(ct);
@@ -114,7 +119,7 @@ public class AgentService : IAgentService
             _db.AgentSoftware.Add(new AgentSoftware
             {
                 AgentId = agent.Id,
-                Name = Truncate(sw.Name.Trim(), 300),
+                Name = Truncate(sw.Name.Trim(), 300)!,
                 Publisher = Truncate(sw.Publisher, 200),
                 Version = Truncate(sw.Version, 100),
                 InstallDate = Truncate(sw.InstallDate, 20),
@@ -143,6 +148,7 @@ public class AgentService : IAgentService
             var match = await FindMatchingAssetAsync(agent, ct);
             if (match is not null) agent.AssetId = match.Id;
         }
+        Audit(agent, "Approve");
         await _db.SaveChangesAsync(ct);
     }
 
@@ -152,6 +158,7 @@ public class AgentService : IAgentService
             ?? throw new DomainException("에이전트를 찾을 수 없습니다.");
         agent.Status = AgentStatus.Disabled;
         agent.TokenHash = null;
+        Audit(agent, "Disable");
         await _db.SaveChangesAsync(ct);
     }
 
@@ -168,6 +175,7 @@ public class AgentService : IAgentService
         }
         agent.AssetId = assetId;
         if (assetId is not null) await SyncAssetFromAgentAsync(agent, ct);
+        Audit(agent, assetId is null ? "Unlink" : $"Link:{assetId}");
         await _db.SaveChangesAsync(ct);
     }
 
@@ -201,22 +209,48 @@ public class AgentService : IAgentService
         asset.Manufacturer ??= agent.Manufacturer;
         asset.Model ??= agent.Model;
         asset.SerialNumber ??= agent.SerialNumber;
-        asset.MacAddress ??= agent.MacAddresses?.Split(',').FirstOrDefault();
-        asset.UpdatedBy = _currentUser.UserName;
-        asset.UpdatedAt = DateTime.Now;
+        asset.MacAddress ??= agent.MacAddresses?.Split(',', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        // UpdatedAt/UpdatedBy 는 AppDbContext 가 저장 시 자동으로 기록합니다.
+    }
+
+    /// <summary>에이전트는 heartbeat 마다 바뀌어 자동 감사 대상에서 제외했으므로, 관리자 조작만 직접 기록합니다.</summary>
+    private void Audit(Agent agent, string action)
+    {
+        _db.AuditLogs.Add(new AuditLog
+        {
+            EntityName = nameof(Agent),
+            EntityKey = agent.Id.ToString(),
+            Action = AuditAction.Updated,
+            Changes = System.Text.Json.JsonSerializer.Serialize(new { Action = new { New = action }, Host = new { New = agent.HostName } }),
+            UserName = _currentUser.UserName,
+            Timestamp = DateTime.Now
+        });
+    }
+
+    private static string JoinMacs(IEnumerable<string>? macs)
+    {
+        var joined = string.Join(",", (macs ?? Array.Empty<string>()).Where(m => !string.IsNullOrWhiteSpace(m)));
+        return Truncate(joined, 300) ?? string.Empty;
     }
 
     private static void ApplyEnrollFields(Agent agent, EnrollRequest req)
     {
-        agent.SerialNumber = req.SerialNumber;
-        agent.HostName = req.HostName;
-        agent.Manufacturer = req.Manufacturer;
-        agent.Model = req.Model;
-        agent.OsName = req.OsName;
-        agent.OsVersion = req.OsVersion;
-        agent.MacAddresses = string.Join(",", req.MacAddresses);
-        agent.IpAddress = req.IpAddress;
-        agent.AgentVersion = req.AgentVersion;
+        agent.SerialNumber = Truncate(req.SerialNumber, 100);
+        agent.HostName = Truncate(req.HostName, 100) ?? string.Empty;
+        agent.Manufacturer = Truncate(req.Manufacturer, 100);
+        agent.Model = Truncate(req.Model, 100);
+        agent.OsName = Truncate(req.OsName, 100);
+        agent.OsVersion = Truncate(req.OsVersion, 100);
+        agent.MacAddresses = JoinMacs(req.MacAddresses);
+        agent.IpAddress = Truncate(req.IpAddress, 100);
+        agent.AgentVersion = Truncate(req.AgentVersion, 32) ?? string.Empty;
+    }
+
+    /// <summary>다른 컨텍스트에서 읽어 온(추적되지 않는) 엔티티도 변경이 저장되도록 현재 컨텍스트에 연결합니다.</summary>
+    private void Track(Agent agent)
+    {
+        if (_db.Entry(agent).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
+            _db.Agents.Attach(agent);
     }
 
     private static string CreateToken()
