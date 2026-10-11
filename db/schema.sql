@@ -321,6 +321,7 @@ BEGIN
         [BitLockerOn] bit NULL,
         [DiskTotalGb] bigint NULL,
         [AgentVersion] nvarchar(32) NOT NULL,
+        [Ring] int NOT NULL DEFAULT 0,
         [Status] int NOT NULL,
         [TokenHash] nvarchar(64) NULL,
         [EnrolledAt] datetime2 NOT NULL,

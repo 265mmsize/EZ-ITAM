@@ -29,11 +29,14 @@ public class AgentService : IAgentService
     private readonly IConfiguration _config;
     private readonly ICurrentUserService _currentUser;
 
-    public AgentService(AppDbContext db, IConfiguration config, ICurrentUserService currentUser)
+    private readonly IUpdateCatalog _updates;
+
+    public AgentService(AppDbContext db, IConfiguration config, ICurrentUserService currentUser, IUpdateCatalog updates)
     {
         _db = db;
         _config = config;
         _currentUser = currentUser;
+        _updates = updates;
     }
 
     public async Task<EnrollResponse> EnrollAsync(EnrollRequest req, CancellationToken ct = default)
@@ -81,7 +84,19 @@ public class AgentService : IAgentService
         var inventoryDue = agent.Status == AgentStatus.Approved
             && (agent.LastInventoryAt is null || agent.LastInventoryAt < DateTime.Now.AddHours(-InventoryIntervalHours));
         var interval = _config.GetValue("Agent:HeartbeatSeconds", DefaultHeartbeatSeconds);
-        return new HeartbeatResponse(interval, inventoryDue, agent.Status.ToString());
+
+        // 승인된 에이전트에만 업데이트를 알립니다. 링의 최신 버전이 현재 버전과 다를 때만 값이 채워집니다.
+        string? targetVersion = null, sha = null;
+        if (agent.Status == AgentStatus.Approved)
+        {
+            var manifest = _updates.GetManifest(agent.Ring);
+            if (manifest is not null && manifest.Version != agent.AgentVersion)
+            {
+                targetVersion = manifest.Version;
+                sha = manifest.Sha256;
+            }
+        }
+        return new HeartbeatResponse(interval, inventoryDue, agent.Status.ToString(), targetVersion, sha);
     }
 
     public async Task ApplyInventoryAsync(Agent agent, InventoryPayload payload, CancellationToken ct = default)

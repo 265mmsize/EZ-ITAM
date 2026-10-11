@@ -43,3 +43,10 @@ public enum AgentStatus
     [Display(Name = "승인됨")] Approved = 1,
     [Display(Name = "사용 중지")] Disabled = 2
 }
+
+/// <summary>업데이트 배포 링. Pilot 은 먼저 받고, Stable 은 검증 후 받습니다.</summary>
+public enum AgentRing
+{
+    Stable = 0,
+    Pilot = 1
+}

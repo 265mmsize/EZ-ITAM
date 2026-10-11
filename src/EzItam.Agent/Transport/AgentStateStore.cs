@@ -30,7 +30,8 @@ public sealed class AgentStateStore
             {
                 AgentId = stored.AgentId,
                 Token = stored.TokenProtected is null ? null : Unprotect(stored.TokenProtected),
-                LastInventoryUtc = stored.LastInventoryUtc
+                LastInventoryUtc = stored.LastInventoryUtc,
+                LastUpdateAttemptVersion = stored.LastUpdateAttemptVersion
             };
         }
         catch (Exception ex) when (ex is JsonException or CryptographicException or IOException)
@@ -46,7 +47,8 @@ public sealed class AgentStateStore
         {
             AgentId = state.AgentId,
             TokenProtected = state.Token is null ? null : Protect(state.Token),
-            LastInventoryUtc = state.LastInventoryUtc
+            LastInventoryUtc = state.LastInventoryUtc,
+            LastUpdateAttemptVersion = state.LastUpdateAttemptVersion
         };
         File.WriteAllText(_path, JsonSerializer.Serialize(stored));
     }
@@ -80,6 +82,7 @@ public sealed class AgentStateStore
         public int? AgentId { get; set; }
         public string? TokenProtected { get; set; }
         public DateTime? LastInventoryUtc { get; set; }
+        public string? LastUpdateAttemptVersion { get; set; }
     }
 }
 
@@ -88,4 +91,7 @@ public sealed class AgentState
     public int? AgentId { get; set; }
     public string? Token { get; set; }
     public DateTime? LastInventoryUtc { get; set; }
+
+    /// <summary>마지막으로 적용을 시도한 버전. 같은 버전은 실패해도 다시 시도하지 않습니다.</summary>
+    public string? LastUpdateAttemptVersion { get; set; }
 }

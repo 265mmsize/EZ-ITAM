@@ -353,6 +353,11 @@ public sealed class NextTagResponse
     public string Tag { get; init; } = string.Empty;
 }
 
+public sealed class AgentRingRequest
+{
+    public AgentRing Ring { get; set; } = AgentRing.Stable;
+}
+
 public sealed class AgentLinkRequest
 {
     public int? AssetId { get; set; }

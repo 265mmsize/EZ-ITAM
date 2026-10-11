@@ -108,6 +108,9 @@ namespace EzItam.Api.Data.Migrations
                     b.Property<bool>("RebootPending")
                         .HasColumnType("bit");
 
+                    b.Property<int>("Ring")
+                        .HasColumnType("int");
+
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");

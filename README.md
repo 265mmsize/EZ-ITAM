@@ -160,3 +160,20 @@ sc.exe start EzItamAgent
 ## 라이선스 / 기타
 
 사내 사용 목적의 프로젝트입니다. 기여·이슈는 GitHub 저장소를 이용해 주세요.
+
+## 에이전트 업데이트 배포 (설치 후 자동)
+
+설치는 1회 수동으로 합니다. 이후 업데이트는 에이전트가 하트비트 응답을 보고 스스로 받습니다.
+
+1. 패키지 생성 및 배치 (관리 PC, PowerShell):
+   ```powershell
+   .\tools\Publish-AgentUpdate.ps1 -Version 1.0.1 -Ring Pilot    # 먼저 파일럿 링
+   .\tools\Publish-AgentUpdate.ps1 -Version 1.0.1 -Ring Stable   # 검증 후 전체 링
+   ```
+   결과는 `src/EzItam.Api/updates/{Ring}/` 에 zip 과 `manifest.json`(버전, SHA-256)으로 생깁니다. 배포 경로는 `Updates:Root` 로 바꿀 수 있습니다.
+2. 장치 링 지정: `POST api/v1/agents/{id}/ring` (Admin, body `{"Ring":"Pilot"}`). 기본값은 Stable 입니다.
+3. 에이전트 동작: 승인된 장치만 업데이트를 받습니다. 새 버전을 발견하면 0~30분(`Agent:UpdateJitterMinutes`) 무작위 대기 후 받아서 SHA-256 을 검증하고, 서비스를 멈춘 뒤 교체·재시작합니다. 20초 안에 Running 이 되지 않으면 백업으로 되돌립니다. 같은 버전은 한 번만 시도합니다.
+4. 교체 과정은 `%ProgramData%\EzItam\Agent\update\update.log` 에 기록됩니다.
+5. `appsettings*.json` 은 패키지에 포함되지 않아 장치의 서버 주소와 키를 덮어쓰지 않습니다.
+
+> 주의: 교체 스크립트(PowerShell)와 서비스 재시작 동작은 Windows 실기에서 아직 검증하지 않았습니다. 첫 배포는 장치 몇 대의 파일럿으로 확인하세요.

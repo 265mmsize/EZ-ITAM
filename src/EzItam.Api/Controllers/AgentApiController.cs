@@ -50,6 +50,18 @@ public class AgentApiController : ControllerBase
         return Accepted(new { received = payload.Software.Count });
     }
 
+    /// <summary>내 링의 최신 패키지를 내려줍니다. 인증과 승인된 장치만 받을 수 있습니다.</summary>
+    [HttpGet("update-package")]
+    public async Task<IActionResult> UpdatePackage([FromServices] IUpdateCatalog updates, CancellationToken ct)
+    {
+        var agent = await _agents.AuthenticateAsync(BearerToken(), ct);
+        if (agent is null) return Unauthorized();
+        if (agent.Status != AgentStatus.Approved) return StatusCode(StatusCodes.Status403Forbidden);
+        var path = updates.GetPackagePath(agent.Ring);
+        if (path is null || !System.IO.File.Exists(path)) return NotFound();
+        return PhysicalFile(path, "application/zip", Path.GetFileName(path));
+    }
+
     private string? BearerToken()
     {
         var header = Request.Headers.Authorization.ToString();

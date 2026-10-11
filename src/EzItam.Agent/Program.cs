@@ -14,6 +14,7 @@ if (OperatingSystem.IsWindows() && !builder.Configuration.GetValue<bool>("Agent:
 else
     builder.Services.AddSingleton<IInventoryCollector, FakeInventoryCollector>();
 
+builder.Services.AddSingleton<AgentUpdater>();
 builder.Services.AddHostedService<AgentWorker>();
 
 var host = builder.Build();

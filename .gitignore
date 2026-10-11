@@ -487,3 +487,7 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# 업데이트 패키지(배포 산출물)는 저장소에 넣지 않습니다
+src/EzItam.Api/updates/
+artifacts/

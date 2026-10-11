@@ -18,19 +18,25 @@ public sealed class AgentWorker : BackgroundService
     private readonly AgentApiClient _api;
     private readonly AgentStateStore _store;
     private readonly IInventoryCollector _collector;
+    private readonly AgentUpdater _updater;
     private readonly ILogger<AgentWorker> _logger;
+
+    /// <summary>이번에 발견한 업데이트를 적용해도 되는 시각(무작위 지연 적용)</summary>
+    private DateTime? _updateNotBefore;
 
     public AgentWorker(
         IOptions<AgentOptions> options,
         AgentApiClient api,
         AgentStateStore store,
         IInventoryCollector collector,
+        AgentUpdater updater,
         ILogger<AgentWorker> logger)
     {
         _options = options.Value;
         _api = api;
         _store = store;
         _collector = collector;
+        _updater = updater;
         _logger = logger;
     }
 
@@ -65,6 +71,8 @@ public sealed class AgentWorker : BackgroundService
                     await SendInventoryAsync(state, stoppingToken);
                 }
 
+                await MaybeUpdateAsync(state, hb, stoppingToken);
+
                 delay = TimeSpan.FromSeconds(hb.NextHeartbeatSeconds * Random.Shared.NextDouble() * 0.4 + hb.NextHeartbeatSeconds * 0.8);
                 backoff = MinBackoff;
             }
@@ -97,6 +105,21 @@ public sealed class AgentWorker : BackgroundService
 
             await Task.Delay(delay, stoppingToken);
         }
+    }
+
+    /// <summary>서버가 새 버전을 알렸을 때만 적용합니다. 적용 시점은 무작위로 늦춰 장치들이 한꺼번에 재시작하지 않게 합니다.</summary>
+    private async Task MaybeUpdateAsync(AgentState state, HeartbeatResponse hb, CancellationToken ct)
+    {
+        if (hb.TargetVersion is null || hb.UpdateSha256 is null)
+        {
+            _updateNotBefore = null;
+            return;
+        }
+        _updateNotBefore ??= DateTime.UtcNow.AddMinutes(Random.Shared.NextDouble() * _options.UpdateJitterMinutes);
+        if (DateTime.UtcNow < _updateNotBefore) return;
+
+        _logger.LogInformation("새 버전 {Target} 적용을 시작합니다 (현재 {Current}).", hb.TargetVersion, AgentOptions.AgentVersion);
+        await _updater.TryApplyAsync(state, hb.TargetVersion, hb.UpdateSha256, ct);
     }
 
     private async Task EnrollAsync(AgentState state, CancellationToken ct)

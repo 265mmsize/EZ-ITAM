@@ -50,6 +50,18 @@ public class AgentsController : ApiControllerBase
         return NoContent();
     }
 
+    [HttpPost("{id:int}/ring")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> SetRing(int id, [FromBody] AgentRingRequest req, CancellationToken ct)
+    {
+        var agent = await _db.Agents.FirstOrDefaultAsync(a => a.Id == id, ct) ?? throw new DomainException("에이전트를 찾을 수 없습니다.");
+        agent.Ring = req.Ring;
+        _db.AuditLogs.Add(new AuditLog { EntityName = "Agent", EntityKey = id.ToString(), Action = AuditAction.Updated,
+            Changes = System.Text.Json.JsonSerializer.Serialize(new { Ring = new { New = req.Ring.ToString() } }), UserName = CurrentUser, Timestamp = DateTime.Now });
+        await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     [HttpPost("{id:int}/link")]
     [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Link(int id, [FromBody] AgentLinkRequest req, CancellationToken ct)

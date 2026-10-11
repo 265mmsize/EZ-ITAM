@@ -53,6 +53,19 @@ public sealed class AgentApiClient
         return (await resp.Content.ReadFromJsonAsync<HeartbeatResponse>(JsonOptions, ct))!;
     }
 
+    /// <summary>승인된 링의 최신 업데이트 패키지를 파일로 받습니다.</summary>
+    public async Task DownloadUpdateAsync(string token, string destPath, CancellationToken ct)
+    {
+        using var msg = new HttpRequestMessage(HttpMethod.Get, "api/agent/update-package");
+        msg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var resp = await _http.SendAsync(msg, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (resp.StatusCode is HttpStatusCode.Unauthorized) throw new AgentUnauthorizedException();
+        resp.EnsureSuccessStatusCode();
+        await using var src = await resp.Content.ReadAsStreamAsync(ct);
+        await using var dst = File.Create(destPath);
+        await src.CopyToAsync(dst, ct);
+    }
+
     /// <summary>인벤토리는 gzip 으로 압축해 보냅니다. 실패 시 예외를 던지고, 다음 주기에 최신 값으로 다시 수집합니다.</summary>
     public async Task SendInventoryAsync(InventoryPayload payload, string token, CancellationToken ct)
     {

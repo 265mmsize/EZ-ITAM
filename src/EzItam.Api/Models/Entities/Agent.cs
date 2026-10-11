@@ -37,6 +37,9 @@ public class Agent
 
     public AgentStatus Status { get; set; } = AgentStatus.Pending;
 
+    /// <summary>업데이트 배포 링. 기본은 Stable.</summary>
+    public AgentRing Ring { get; set; } = AgentRing.Stable;
+
     /// <summary>토큰 원문은 저장하지 않고 SHA-256 해시만 저장합니다.</summary>
     [StringLength(64)]
     public string? TokenHash { get; set; }

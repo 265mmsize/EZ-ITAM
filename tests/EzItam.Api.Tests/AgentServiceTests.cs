@@ -14,7 +14,7 @@ public class AgentServiceTests : IDisposable
         .AddInMemoryCollection(new Dictionary<string, string?> { ["Agent:EnrollmentKey"] = "test-key" })
         .Build();
 
-    private AgentService Svc() => new(_testDb.Create(), _config, _testDb.CurrentUser);
+    private AgentService Svc() => new(_testDb.Create(), _config, _testDb.CurrentUser, new NoUpdates());
 
     private static EnrollRequest Enroll(string uuid = "UUID-1", string key = "test-key", string host = "PC-KIM", string? serial = "SN-1")
         => new(key, uuid, serial, host, "Dell", "Latitude", "Windows 11", "10.0", new[] { "AA-BB" }, "10.0.0.5", "1.0.0");
