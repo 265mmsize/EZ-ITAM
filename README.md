@@ -96,14 +96,6 @@ EZITAM_PROFILE=Sqlite ASPNETCORE_ENVIRONMENT=Development dotnet run
 ```
 Visual Studio 에서는 실행 프로필 **sqlite-demo** 를 선택하면 됩니다. (`ezitam.db` 파일이 생성됩니다. 데모 용도이며 운영은 SQL Server 를 사용하세요.)
 
-### Docker 로 실행
-
-```bash
-JWT_KEY="32자 이상의 임의 문자열" AGENT_ENROLL_KEY="에이전트 등록 키" docker compose up --build
-# 본사 화면: http://localhost:5006  (최초 관리자 계정은 Seed 설정 참고)
-# 서버 API:  http://localhost:8080
-```
-
 
 ## 설정 항목 요약
 
