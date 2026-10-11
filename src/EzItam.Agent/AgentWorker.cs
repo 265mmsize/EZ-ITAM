@@ -17,6 +17,7 @@ public sealed class AgentWorker : BackgroundService
     private readonly AgentOptions _options;
     private readonly AgentApiClient _api;
     private readonly AgentStateStore _store;
+    private readonly AgentHistoryStore _history;
     private readonly IInventoryCollector _collector;
     private readonly ILogger<AgentWorker> _logger;
 
@@ -24,12 +25,14 @@ public sealed class AgentWorker : BackgroundService
         IOptions<AgentOptions> options,
         AgentApiClient api,
         AgentStateStore store,
+        AgentHistoryStore history,
         IInventoryCollector collector,
         ILogger<AgentWorker> logger)
     {
         _options = options.Value;
         _api = api;
         _store = store;
+        _history = history;
         _collector = collector;
         _logger = logger;
     }
@@ -59,10 +62,15 @@ public sealed class AgentWorker : BackgroundService
                 if (hb.Status != "Approved")
                 {
                     _logger.LogInformation("서버 상태: {Status}. 승인 전까지 인벤토리를 보내지 않습니다.", hb.Status);
+                    _history.Add("Heartbeat", hb.Status, "승인 전까지 인벤토리를 보내지 않습니다.");
                 }
                 else if (hb.InventoryDue || IsInventoryStale(state))
                 {
                     await SendInventoryAsync(state, stoppingToken);
+                }
+                else
+                {
+                    _history.Add("Heartbeat", hb.Status, "정상");
                 }
 
                 delay = TimeSpan.FromSeconds(hb.NextHeartbeatSeconds * Random.Shared.NextDouble() * 0.4 + hb.NextHeartbeatSeconds * 0.8);
@@ -74,11 +82,13 @@ public sealed class AgentWorker : BackgroundService
                 if (ex.DuringEnroll)
                 {
                     _logger.LogWarning("서버가 등록을 거부했습니다. 등록 키 또는 장치 상태를 확인하세요. {Minutes}분 후 재시도합니다.", MaxBackoff.TotalMinutes);
+                    _history.Add("Enroll", "Rejected", "등록 키 또는 장치 상태를 확인하세요.");
                     delay = MaxBackoff;
                 }
                 else
                 {
                     _logger.LogWarning("인증 실패. 토큰을 지우고 다시 등록합니다.");
+                    _history.Add("Heartbeat", "Unauthorized", "토큰을 지우고 다시 등록합니다.");
                     _store.Clear();
                     delay = MinBackoff;
                 }
@@ -91,6 +101,7 @@ public sealed class AgentWorker : BackgroundService
             {
                 // 수집·저장·네트워크 등 어떤 오류도 서비스 전체를 멈추지 않도록 삼키고 백오프합니다.
                 _logger.LogWarning(ex, "주기 작업 실패. {Seconds}초 후 재시도합니다.", backoff.TotalSeconds);
+                _history.Add("Error", "Failed", ex.Message);
                 delay = backoff;
                 backoff = TimeSpan.FromTicks(Math.Min(backoff.Ticks * 2, MaxBackoff.Ticks));
             }
@@ -128,6 +139,7 @@ public sealed class AgentWorker : BackgroundService
         state.LastInventoryUtc = null;
         _store.Save(state);
         _logger.LogInformation("등록 완료. AgentId={AgentId}, 상태={Status}", resp.AgentId, resp.Status);
+        _history.Add("Enroll", resp.Status, $"AgentId={resp.AgentId}");
     }
 
     private async Task SendInventoryAsync(AgentState state, CancellationToken ct)
@@ -139,6 +151,7 @@ public sealed class AgentWorker : BackgroundService
         state.LastInventoryUtc = DateTime.UtcNow;
         _store.Save(state);
         _logger.LogInformation("인벤토리 전송 완료: 설치 SW {Count}건", sw.Count);
+        _history.Add("Inventory", "Sent", $"설치 SW {sw.Count}건");
     }
 
     private bool IsInventoryStale(AgentState state)
