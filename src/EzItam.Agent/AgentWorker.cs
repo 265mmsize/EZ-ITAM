@@ -20,6 +20,7 @@ public sealed class AgentWorker : BackgroundService
     private readonly AgentHistoryStore _history;
     private readonly IInventoryCollector _collector;
     private readonly AgentUpdater _updater;
+    private readonly AgentHistoryStore _history;
     private readonly ILogger<AgentWorker> _logger;
 
     /// <summary>이번에 발견한 업데이트를 적용해도 되는 시각(무작위 지연 적용)</summary>
@@ -32,6 +33,7 @@ public sealed class AgentWorker : BackgroundService
         AgentHistoryStore history,
         IInventoryCollector collector,
         AgentUpdater updater,
+        AgentHistoryStore history,
         ILogger<AgentWorker> logger)
     {
         _options = options.Value;
@@ -40,11 +42,15 @@ public sealed class AgentWorker : BackgroundService
         _history = history;
         _collector = collector;
         _updater = updater;
+        _history = history;
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // 업데이트 후 새 버전으로 뜬 것을 이력에 남겨 트레이 화면에서 확인할 수 있게 합니다.
+        _history.Add("Startup", "Running", AgentOptions.AgentVersion);
+
         // 서버 집중 방지를 위해 시작 시점을 무작위로 늦춥니다.
         await Task.Delay(TimeSpan.FromSeconds(Random.Shared.Next(5, 60)), stoppingToken);
 

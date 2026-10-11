@@ -19,12 +19,14 @@ public sealed class AgentUpdater
     private readonly AgentApiClient _api;
     private readonly AgentStateStore _store;
     private readonly AgentOptions _options;
+    private readonly AgentHistoryStore _history;
     private readonly ILogger<AgentUpdater> _logger;
 
-    public AgentUpdater(AgentApiClient api, AgentStateStore store, IOptions<AgentOptions> options, ILogger<AgentUpdater> logger)
+    public AgentUpdater(AgentApiClient api, AgentStateStore store, AgentHistoryStore history, IOptions<AgentOptions> options, ILogger<AgentUpdater> logger)
     {
         _api = api;
         _store = store;
+        _history = history;
         _options = options.Value;
         _logger = logger;
     }
@@ -41,6 +43,7 @@ public sealed class AgentUpdater
         }
         if (state.LastUpdateAttemptVersion == targetVersion) return false;
 
+        _history.Add("Update", "Downloading", targetVersion);
         var dir = UpdateDir;
         if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
         Directory.CreateDirectory(dir);
@@ -53,6 +56,7 @@ public sealed class AgentUpdater
         if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogError("업데이트 패키지 해시가 일치하지 않습니다. {Version} 은 적용하지 않습니다.", targetVersion);
+            _history.Add("Update", "HashMismatch", targetVersion);
             MarkAttempted(state, targetVersion);
             return false;
         }
@@ -62,6 +66,7 @@ public sealed class AgentUpdater
         if (!File.Exists(Path.Combine(staging, ExeName)))
         {
             _logger.LogError("패키지에 {Exe} 가 없습니다. {Version} 은 적용하지 않습니다.", ExeName, targetVersion);
+            _history.Add("Update", "Invalid", targetVersion);
             MarkAttempted(state, targetVersion);
             return false;
         }
@@ -83,6 +88,7 @@ public sealed class AgentUpdater
                      "-ServiceName", ServiceName, "-Staging", staging, "-Install", install, "-Backup", backup })
             psi.ArgumentList.Add(arg);
         Process.Start(psi);
+        _history.Add("Update", "Scheduled", $"{AgentOptions.AgentVersion} → {targetVersion}");
         _logger.LogInformation("업데이트 스크립트를 실행했습니다. 대상 버전 {Version}", targetVersion);
         return true;
     }
