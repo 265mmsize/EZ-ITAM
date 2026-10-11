@@ -1,20 +1,15 @@
+using System.Security.Claims;
+using EzItam.Web.Api;
 using EzItam.Web.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 
 namespace EzItam.Web.Controllers;
 
 public class AccountController : BaseController
 {
-    private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly UserManager<IdentityUser> _userManager;
-
-    public AccountController(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager)
-    {
-        _signInManager = signInManager;
-        _userManager = userManager;
-    }
+    public AccountController(ItamApiClient api) : base(api) { }
 
     [HttpGet]
     [AllowAnonymous]
@@ -30,28 +25,46 @@ public class AccountController : BaseController
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
-
-        var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, lockoutOnFailure: true);
-        if (result.Succeeded)
+        try
         {
-            if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-                return Redirect(model.ReturnUrl);
+            var token = await Api.LoginAsync(new LoginRequest { UserName = model.UserName, Password = model.Password });
+            var claims = new List<Claim> { new(ClaimTypes.Name, token.UserName) };
+            claims.AddRange(token.Roles.Select(r => new Claim(ClaimTypes.Role, r)));
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
+
+            var props = new AuthenticationProperties
+            {
+                IsPersistent = model.RememberMe,
+                ExpiresUtc = token.ExpiresAtUtc
+            };
+            props.StoreTokens(new[] { new AuthenticationToken { Name = "access_token", Value = token.AccessToken } });
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity), props);
+
+            if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl)) return Redirect(model.ReturnUrl);
             return RedirectToAction("Index", "Home");
         }
-        if (result.IsLockedOut)
+        catch (ApiException ex)
         {
-            ModelState.AddModelError(string.Empty, "로그인 실패 횟수 초과로 계정이 잠겼습니다. 10분 후 다시 시도하세요.");
+            AddApiError(ex);
             return View(model);
         }
-        ModelState.AddModelError(string.Empty, "아이디 또는 비밀번호가 올바르지 않습니다.");
-        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await _signInManager.SignOutAsync();
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> Expired()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["Alert.Error"] = "로그인 세션이 만료되었습니다. 다시 로그인하세요.";
         return RedirectToAction(nameof(Login));
     }
 
@@ -67,17 +80,16 @@ public class AccountController : BaseController
     public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
-        var user = await _userManager.GetUserAsync(User);
-        if (user is null) return RedirectToAction(nameof(Login));
-
-        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
-        if (!result.Succeeded)
+        try
         {
-            foreach (var e in result.Errors) ModelState.AddModelError(string.Empty, e.Description);
+            await Api.ChangePasswordAsync(new ChangePasswordRequest { CurrentPassword = model.CurrentPassword, NewPassword = model.NewPassword });
+            Success("비밀번호가 변경되었습니다.");
+            return RedirectToAction("Index", "Home");
+        }
+        catch (ApiException ex)
+        {
+            AddApiError(ex);
             return View(model);
         }
-        await _signInManager.RefreshSignInAsync(user);
-        Success("비밀번호가 변경되었습니다.");
-        return RedirectToAction("Index", "Home");
     }
 }

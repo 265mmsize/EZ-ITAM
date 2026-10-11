@@ -1,9 +1,9 @@
-@model Asset
+@model AssetDto
 @{
     ViewData["Title"] = Model.AssetTag;
     var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
     var isAdmin = User.IsInRole("Admin");
-    var logs = ViewBag.AuditLogs as List<AuditLog> ?? new();
+    var logs = ViewBag.AuditLogs as List<AuditDto> ?? new();
 }
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
@@ -61,7 +61,7 @@
                 <dt>공급업체</dt><dd>@(Model.Vendor?.Name ?? "-")</dd>
                 <dt>구매일</dt><dd>@Model.PurchaseDate.Ymd()</dd>
                 <dt>구매가격</dt><dd>@Model.PurchasePrice.Money()</dd>
-                <dt>현재 장부가액</dt><dd>@Model.CurrentBookValue().Money() <span class="text-muted small">(정액법 @(Model.Category?.DepreciationMonths)개월)</span></dd>
+                <dt>현재 장부가액</dt><dd>@Model.CurrentBookValue.Money() <span class="text-muted small">(정액법 @(Model.Category?.DepreciationMonths)개월)</span></dd>
                 <dt>보증만료일</dt>
                 <dd class="@(Model.IsWarrantyExpired ? "text-danger" : Model.IsWarrantyExpiringSoon ? "text-warning fw-bold" : "")">
                     @Model.WarrantyExpiry.Ymd()

@@ -1,79 +1,45 @@
-using EzItam.Web.Data;
-using EzItam.Web.Models.Entities;
-using EzItam.Web.Services;
+using EzItam.Web.Api;
 using EzItam.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EzItam.Web.Controllers;
 
 public class AssetsController : BaseController
 {
-    private readonly AppDbContext _db;
-    private readonly IAssetService _assets;
+    public AssetsController(ItamApiClient api) : base(api) { }
 
-    public AssetsController(AppDbContext db, IAssetService assets)
+    public async Task<IActionResult> Index(AssetFilter filter)
     {
-        _db = db;
-        _assets = assets;
-    }
-
-    public async Task<IActionResult> Index(AssetFilter filter, CancellationToken ct)
-    {
-        var result = await _assets.SearchAsync(filter, ct);
-        ViewBag.Categories = await CategoryListAsync(_db, filter.CategoryId);
-        ViewBag.Locations = await LocationListAsync(_db, filter.LocationId);
-        ViewBag.Departments = await DepartmentListAsync(_db, filter.DepartmentId);
+        var result = await Api.SearchAssetsAsync(filter);
+        ViewBag.Categories = await OptionsAsync("categories", filter.CategoryId?.ToString());
+        ViewBag.Locations = await OptionsAsync("locations", filter.LocationId?.ToString());
+        ViewBag.Departments = await OptionsAsync("departments", filter.DepartmentId?.ToString());
         ViewBag.Statuses = EnumSelectList(filter.Status);
         return View(new AssetIndexViewModel { Filter = filter, Result = result });
     }
 
-    public async Task<IActionResult> Export(AssetFilter filter, CancellationToken ct)
+    public async Task<IActionResult> Export(AssetFilter filter)
     {
-        var rows = await _assets.Query(filter).Include(a => a.Vendor).ToListAsync(ct);
-        var bytes = CsvExporter.Build(rows,
-            ("자산번호", a => a.AssetTag),
-            ("자산명", a => a.Name),
-            ("분류", a => a.Category?.Name),
-            ("상태", a => a.Status),
-            ("제조사", a => a.Manufacturer),
-            ("모델명", a => a.Model),
-            ("시리얼번호", a => a.SerialNumber),
-            ("사용자", a => a.CurrentEmployee?.Name),
-            ("사번", a => a.CurrentEmployee?.EmployeeNo),
-            ("부서", a => a.CurrentEmployee?.Department?.Name),
-            ("위치", a => a.Location?.Name),
-            ("공급업체", a => a.Vendor?.Name),
-            ("구매일", a => a.PurchaseDate),
-            ("구매가격", a => a.PurchasePrice),
-            ("보증만료일", a => a.WarrantyExpiry),
-            ("호스트명", a => a.HostName),
-            ("IP", a => a.IpAddress),
-            ("MAC", a => a.MacAddress),
-            ("OS", a => a.OperatingSystem),
-            ("비고", a => a.Notes));
+        var bytes = await Api.ExportAssetsAsync(filter);
         return File(bytes, "text/csv; charset=utf-8", $"assets_{DateTime.Now:yyyyMMdd_HHmm}.csv");
     }
 
-    public async Task<IActionResult> Details(int id, CancellationToken ct)
+    public async Task<IActionResult> Details(int id)
     {
-        var asset = await _assets.GetAsync(id, ct);
-        if (asset is null) return NotFound();
-        ViewBag.AuditLogs = await _db.AuditLogs.AsNoTracking()
-            .Where(l => l.EntityName == nameof(Asset) && l.EntityKey == id.ToString())
-            .OrderByDescending(l => l.Timestamp).Take(20).ToListAsync(ct);
+        var asset = await Api.GetAssetAsync(id);
+        var logs = await Api.AuditAsync("Asset", null, null, null, id.ToString(), 1);
+        ViewBag.AuditLogs = logs.Items.Take(20).ToList();
         return View(asset);
     }
 
     [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Create(int? categoryId)
     {
-        var asset = new Asset { Status = AssetStatus.InStock, CategoryId = categoryId ?? 0 };
+        var asset = new AssetDto { Status = AssetStatus.InStock, CategoryId = categoryId ?? 0 };
         if (categoryId.HasValue)
         {
-            try { asset.AssetTag = await _assets.GenerateAssetTagAsync(categoryId.Value); }
-            catch (DomainException) { }
+            try { asset.AssetTag = await Api.NextTagAsync(categoryId.Value); }
+            catch (ApiException) { }
         }
         await PopulateFormListsAsync(asset);
         return View(asset);
@@ -82,21 +48,18 @@ public class AssetsController : BaseController
     [HttpPost]
     [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Asset asset, CancellationToken ct)
+    public async Task<IActionResult> Create(AssetDto asset)
     {
-        if (asset.CategoryId == 0) ModelState.AddModelError(nameof(Asset.CategoryId), "분류를 선택하세요.");
+        if (asset.CategoryId == 0) ModelState.AddModelError(nameof(AssetDto.CategoryId), "분류를 선택하세요.");
         if (ModelState.IsValid)
         {
             try
             {
-                await _assets.CreateAsync(asset, ct);
-                Success($"자산 {asset.AssetTag} 이(가) 등록되었습니다.");
-                return RedirectToAction(nameof(Details), new { id = asset.Id });
+                var saved = await Api.CreateAssetAsync(asset);
+                Success($"자산 {saved.AssetTag} 이(가) 등록되었습니다.");
+                return RedirectToAction(nameof(Details), new { id = saved.Id });
             }
-            catch (DomainException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
+            catch (ApiException ex) { AddApiError(ex); }
         }
         await PopulateFormListsAsync(asset);
         return View(asset);
@@ -106,15 +69,14 @@ public class AssetsController : BaseController
     [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> NextTag(int categoryId)
     {
-        try { return Json(new { tag = await _assets.GenerateAssetTagAsync(categoryId) }); }
-        catch (DomainException ex) { return BadRequest(new { error = ex.Message }); }
+        try { return Json(new { tag = await Api.NextTagAsync(categoryId) }); }
+        catch (ApiException ex) { return BadRequest(new { error = ex.Message }); }
     }
 
     [Authorize(Policy = "CanEdit")]
-    public async Task<IActionResult> Edit(int id, CancellationToken ct)
+    public async Task<IActionResult> Edit(int id)
     {
-        var asset = await _db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
-        if (asset is null) return NotFound();
+        var asset = await Api.GetAssetAsync(id);
         await PopulateFormListsAsync(asset);
         return View(asset);
     }
@@ -122,21 +84,18 @@ public class AssetsController : BaseController
     [HttpPost]
     [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Asset asset, CancellationToken ct)
+    public async Task<IActionResult> Edit(int id, AssetDto asset)
     {
         if (id != asset.Id) return BadRequest();
         if (ModelState.IsValid)
         {
             try
             {
-                await _assets.UpdateAsync(asset, ct);
+                await Api.UpdateAssetAsync(id, asset);
                 Success("자산 정보가 저장되었습니다.");
                 return RedirectToAction(nameof(Details), new { id });
             }
-            catch (DomainException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
+            catch (ApiException ex) { AddApiError(ex); }
         }
         await PopulateFormListsAsync(asset);
         return View(asset);
@@ -145,61 +104,54 @@ public class AssetsController : BaseController
     [HttpPost]
     [Authorize(Policy = "AdminOnly")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    public async Task<IActionResult> Delete(int id)
     {
         try
         {
-            await _assets.DeleteAsync(id, ct);
+            await Api.DeleteAssetAsync(id);
             Success("자산이 삭제되었습니다.");
             return RedirectToAction(nameof(Index));
         }
-        catch (DomainException ex)
+        catch (ApiException ex)
         {
             Error(ex.Message);
             return RedirectToAction(nameof(Details), new { id });
         }
     }
 
-    // ---------- 불출 ----------
     [Authorize(Policy = "CanEdit")]
-    public async Task<IActionResult> CheckOut(int id, CancellationToken ct)
+    public async Task<IActionResult> CheckOut(int id)
     {
-        var asset = await _db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
-        if (asset is null) return NotFound();
-        ViewBag.Employees = await EmployeeListAsync(_db);
+        var asset = await Api.GetAssetAsync(id);
+        ViewBag.Employees = await OptionsAsync("employees");
         return View(new CheckOutViewModel { AssetId = asset.Id, AssetTag = asset.AssetTag, AssetName = asset.Name });
     }
 
     [HttpPost]
     [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CheckOut(CheckOutViewModel model, CancellationToken ct)
+    public async Task<IActionResult> CheckOut(CheckOutViewModel model)
     {
         if (ModelState.IsValid)
         {
             try
             {
-                await _assets.CheckOutAsync(model.AssetId, model.EmployeeId!.Value, model.Notes, ct);
+                await Api.CheckOutAsync(model.AssetId, new CheckOutRequest { EmployeeId = model.EmployeeId!.Value, Notes = model.Notes });
                 Success("불출 처리되었습니다.");
                 return RedirectToAction(nameof(Details), new { id = model.AssetId });
             }
-            catch (DomainException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
+            catch (ApiException ex) { AddApiError(ex); }
         }
-        ViewBag.Employees = await EmployeeListAsync(_db, model.EmployeeId);
+        ViewBag.Employees = await OptionsAsync("employees", model.EmployeeId?.ToString());
         return View(model);
     }
 
-    // ---------- 반납 ----------
     [Authorize(Policy = "CanEdit")]
-    public async Task<IActionResult> CheckIn(int id, CancellationToken ct)
+    public async Task<IActionResult> CheckIn(int id)
     {
-        var asset = await _db.Assets.AsNoTracking().Include(a => a.CurrentEmployee).FirstOrDefaultAsync(a => a.Id == id, ct);
-        if (asset is null) return NotFound();
-        ViewBag.Locations = await LocationListAsync(_db, asset.LocationId);
-        ViewBag.Statuses = EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+        var asset = await Api.GetAssetAsync(id);
+        ViewBag.Locations = await OptionsAsync("locations", asset.LocationId?.ToString());
+        ViewBag.Statuses = CheckInStatuses();
         return View(new CheckInViewModel
         {
             AssetId = asset.Id, AssetTag = asset.AssetTag, AssetName = asset.Name,
@@ -210,63 +162,58 @@ public class AssetsController : BaseController
     [HttpPost]
     [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CheckIn(CheckInViewModel model, CancellationToken ct)
+    public async Task<IActionResult> CheckIn(CheckInViewModel model)
     {
         if (ModelState.IsValid)
         {
             try
             {
-                await _assets.CheckInAsync(model.AssetId, model.NewStatus, model.LocationId, model.Notes, ct);
+                await Api.CheckInAsync(model.AssetId, new CheckInRequest { NewStatus = model.NewStatus, LocationId = model.LocationId, Notes = model.Notes });
                 Success("반납 처리되었습니다.");
                 return RedirectToAction(nameof(Details), new { id = model.AssetId });
             }
-            catch (DomainException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
+            catch (ApiException ex) { AddApiError(ex); }
         }
-        ViewBag.Locations = await LocationListAsync(_db, model.LocationId);
-        ViewBag.Statuses = EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+        ViewBag.Locations = await OptionsAsync("locations", model.LocationId?.ToString());
+        ViewBag.Statuses = CheckInStatuses();
         return View(model);
     }
 
-    // ---------- 상태 변경 ----------
     [Authorize(Policy = "CanEdit")]
-    public async Task<IActionResult> ChangeStatus(int id, CancellationToken ct)
+    public async Task<IActionResult> ChangeStatus(int id)
     {
-        var asset = await _db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
-        if (asset is null) return NotFound();
-        ViewBag.Statuses = EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+        var asset = await Api.GetAssetAsync(id);
+        ViewBag.Statuses = CheckInStatuses();
         return View(new ChangeStatusViewModel { AssetId = asset.Id, AssetTag = asset.AssetTag, AssetName = asset.Name, CurrentStatus = asset.Status, NewStatus = asset.Status });
     }
 
     [HttpPost]
     [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ChangeStatus(ChangeStatusViewModel model, CancellationToken ct)
+    public async Task<IActionResult> ChangeStatus(ChangeStatusViewModel model)
     {
         if (ModelState.IsValid)
         {
             try
             {
-                await _assets.ChangeStatusAsync(model.AssetId, model.NewStatus, model.Notes, ct);
+                await Api.ChangeStatusAsync(model.AssetId, new ChangeStatusRequest { NewStatus = model.NewStatus, Notes = model.Notes });
                 Success("상태가 변경되었습니다.");
                 return RedirectToAction(nameof(Details), new { id = model.AssetId });
             }
-            catch (DomainException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
+            catch (ApiException ex) { AddApiError(ex); }
         }
-        ViewBag.Statuses = EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+        ViewBag.Statuses = CheckInStatuses();
         return View(model);
     }
 
-    private async Task PopulateFormListsAsync(Asset asset)
+    private List<SelectListItem> CheckInStatuses()
+        => EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+
+    private async Task PopulateFormListsAsync(AssetDto asset)
     {
-        ViewBag.Categories = await CategoryListAsync(_db, asset.CategoryId);
-        ViewBag.Locations = await LocationListAsync(_db, asset.LocationId);
-        ViewBag.Vendors = await VendorListAsync(_db, asset.VendorId);
-        ViewBag.Employees = await EmployeeListAsync(_db, asset.CurrentEmployeeId);
+        ViewBag.Categories = await OptionsAsync("categories", asset.CategoryId.ToString());
+        ViewBag.Locations = await OptionsAsync("locations", asset.LocationId?.ToString());
+        ViewBag.Vendors = await OptionsAsync("vendors", asset.VendorId?.ToString());
+        ViewBag.Employees = await OptionsAsync("employees", asset.CurrentEmployeeId?.ToString());
     }
 }

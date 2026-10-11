@@ -28,23 +28,31 @@
 | Manager | 자산/라이선스/유지보수/기준정보 등록·수정, 불출·반납·할당 |
 | Admin | Manager 권한 + 삭제, 사용자 관리 |
 
-## 프로젝트 구조
+## 솔루션 구조
 
-```
-EZ-ITAM.sln
-├─ src/EzItam.Web/              ASP.NET Core MVC 웹 애플리케이션
-│  ├─ Controllers/              화면별 컨트롤러
-│  ├─ Data/                     AppDbContext(감사 로그 자동 기록), 시드, EF 마이그레이션
-│  ├─ Models/Entities/          엔티티 (Asset, Employee, SoftwareLicense …)
-│  ├─ Services/                 AssetService, LicenseService, DashboardService, CSV
-│  ├─ ViewModels/, Views/, wwwroot/
-│  └─ appsettings*.json
-├─ src/EzItam.Agent/            Windows PC 에이전트 (.NET 8 Worker Service)
-├─ src/EzItam.Contracts/        서버·에이전트 공용 DTO
-├─ tests/EzItam.Tests/          xUnit 단위 테스트 (SQLite in-memory)
-├─ db/schema.sql                SQL Server 용 DDL (EF 마이그레이션에서 생성, 멱등)
-└─ docker-compose.yml           SQL Server + 앱 빠른 실행
-```
+서버와 본사 화면은 **REST API로만** 연결됩니다. 화면은 DB나 서버 코드를 참조하지 않습니다.
+
+| 프로젝트 | 역할 | 실행 위치 |
+|---|---|---|
+| `src/EzItam.Api` | 서버: REST API, EF Core, SQL Server, 계정·JWT 인증, 에이전트 API | 본사 서버 |
+| `src/EzItam.Web` | 본사 관리 화면 (MVC). API만 호출 | 본사 (3~4명 사용) |
+| `src/EzItam.Agent` | PC 에이전트 (Windows 서비스). API만 호출 | 지사 PC 전체 |
+| `src/EzItam.Contracts` | API·화면·에이전트가 공유하는 DTO와 열거형 | 공용 라이브러리 |
+| `tests/EzItam.Api.Tests` | 서버 업무 규칙과 에이전트 처리 테스트 (34건) | 개발 |
+
+### 실행 주소
+
+- 서버 API: `http://localhost:5100` (Swagger: `/swagger`, Development 환경만)
+- 본사 화면: `http://localhost:5006`
+- 화면이 호출할 API 주소는 `src/EzItam.Web/appsettings.json` 의 `Api:BaseUrl` 에서 설정합니다.
+- 에이전트가 접속할 서버 주소는 `Agent:ServerUrl` 에서 설정합니다.
+
+### API 경로 규칙
+
+- 화면용 API: `api/v1/{자원}` (자산, 유지보수, 라이선스, 사원, 부서, 분류, 위치, 공급업체, 감사, 사용자, 대시보드, 에이전트 관리)
+- 드롭다운 목록: `api/v1/options/{종류}`
+- 로그인: `POST api/v1/auth/login` → 액세스 토큰 발급
+- 에이전트 전용: `api/agent/enroll`, `heartbeat`, `inventory`
 
 ## 시작하기 (Visual Studio 2022)
 
@@ -91,8 +99,9 @@ Visual Studio 에서는 실행 프로필 **sqlite-demo** 를 선택하면 됩니
 ### Docker 로 실행
 
 ```bash
-docker compose up --build
-# http://localhost:8080  (admin / Admin!2345)
+JWT_KEY="32자 이상의 임의 문자열" AGENT_ENROLL_KEY="에이전트 등록 키" docker compose up --build
+# 본사 화면: http://localhost:5006  (최초 관리자 계정은 Seed 설정 참고)
+# 서버 API:  http://localhost:8080
 ```
 
 

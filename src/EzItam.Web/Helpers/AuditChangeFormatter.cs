@@ -6,7 +6,7 @@ public static class AuditChangeFormatter
 {
     public record Line(string Property, string? Old, string? New);
 
-    /// <summary>AuditLog.Changes JSON 을 "속성: 이전 → 이후" 목록으로 변환합니다.</summary>
+    /// <summary>AuditDto.Changes JSON 을 "속성: 이전 → 이후" 목록으로 변환합니다.</summary>
     public static IReadOnlyList<Line> Parse(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return Array.Empty<Line>();

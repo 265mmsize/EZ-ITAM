@@ -1,13 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using EzItam.Web.Models.Entities;
-using EzItam.Web.Services;
 
 namespace EzItam.Web.ViewModels;
 
 public class AssetIndexViewModel
 {
     public AssetFilter Filter { get; set; } = new();
-    public PagedResult<Asset> Result { get; set; } = new();
+    public PageResult<AssetDto> Result { get; set; } = new();
 }
 
 public class CheckOutViewModel

@@ -1,0 +1,9 @@
+global using EzItam.Contracts;
+global using EzItam.Api.Models.Entities;
+global using EzItam.Api.Data;
+global using EzItam.Api.Services;
+global using EzItam.Api.Mapping;
+global using EzItam.Api.Infrastructure;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.EntityFrameworkCore;

@@ -6,20 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EzItam.Web</RootNamespace>
     <UserSecretsId>ez-itam-web</UserSecretsId>
-    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
+    <!-- 화면은 DB를 직접 보지 않고 REST API 로만 데이터를 주고받습니다. 공용 DTO 외에는 참조하지 않습니다. -->
     <ProjectReference Include="..\EzItam.Contracts\EzItam.Contracts.csproj" />
   </ItemGroup>
 

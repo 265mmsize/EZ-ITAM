@@ -1,4 +1,4 @@
-@model List<Department>
+@model List<DepartmentDto>
 @{ ViewData["Title"] = "부서"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">부서</h1>

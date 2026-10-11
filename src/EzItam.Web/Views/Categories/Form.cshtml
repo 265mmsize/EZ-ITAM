@@ -1,4 +1,4 @@
-@model AssetCategory
+@model CategoryDto
 @{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "분류 등록" : "분류 수정"; }
 <partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
 <div class="card" style="max-width:560px"><div class="card-body">

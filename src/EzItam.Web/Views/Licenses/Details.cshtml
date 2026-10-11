@@ -1,4 +1,4 @@
-@model SoftwareLicense
+@model SoftwareLicenseDto
 @{
     ViewData["Title"] = Model.Name;
     var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");

@@ -1,4 +1,4 @@
-@model List<SoftwareLicense>
+@model List<SoftwareLicenseDto>
 @{ ViewData["Title"] = "소프트웨어 라이선스"; bool expiringOnly = ViewBag.ExpiringOnly; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); }
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="h4 mb-0">소프트웨어 라이선스 <span class="text-muted fs-6">@(Model.Count)건</span></h1>

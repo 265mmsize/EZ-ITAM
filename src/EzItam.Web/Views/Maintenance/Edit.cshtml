@@ -1,5 +1,5 @@
-@model MaintenanceRecord
-@{ ViewData["Title"] = "유지보수 수정"; Asset asset = ViewBag.Asset; var isAdmin = User.IsInRole("Admin"); }
+@model MaintenanceDto
+@{ ViewData["Title"] = "유지보수 수정"; AssetDto asset = ViewBag.Asset; var isAdmin = User.IsInRole("Admin"); }
 <partial name="_PageHeader" model="@($"유지보수 수정 - {asset.AssetTag} {asset.Name}")" />
 <div class="card" style="max-width:640px"><div class="card-body">
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-once>

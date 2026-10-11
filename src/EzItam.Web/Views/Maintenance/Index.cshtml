@@ -1,4 +1,4 @@
-@model List<MaintenanceRecord>
+@model List<MaintenanceDto>
 @{ ViewData["Title"] = "유지보수"; bool openOnly = ViewBag.OpenOnly; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); }
 <partial name="_PageHeader" model="@("유지보수 이력")" />
 <div class="card mb-3"><div class="card-body py-2">

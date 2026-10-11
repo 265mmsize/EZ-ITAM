@@ -1,5 +1,5 @@
-using EzItam.Web.Models.Entities;
-using EzItam.Web.Services;
+
+using EzItam.Contracts;
 using Microsoft.AspNetCore.Html;
 
 namespace EzItam.Web.Helpers;

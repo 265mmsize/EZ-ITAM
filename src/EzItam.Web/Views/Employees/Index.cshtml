@@ -1,4 +1,4 @@
-@model List<Employee>
+@model List<EmployeeDto>
 @{ ViewData["Title"] = "사원"; bool includeInactive = ViewBag.IncludeInactive; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">사원 <span class="text-muted fs-6">@(Model.Count)명</span></h1>

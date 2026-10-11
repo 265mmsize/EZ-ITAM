@@ -1,0 +1,127 @@
+using System.Globalization;
+using System.Text;
+using EzItam.Api.Data;
+using EzItam.Api.Infrastructure;
+using EzItam.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// EZITAM_PROFILE=Sqlite 이면 appsettings.Sqlite.json 을 추가로 읽습니다 (로컬 데모용).
+var profile = Environment.GetEnvironmentVariable("EZITAM_PROFILE");
+if (!string.IsNullOrWhiteSpace(profile))
+    builder.Configuration.AddJsonFile($"appsettings.{profile}.json", optional: true, reloadOnChange: true);
+
+// ---------- Database (API 만 DB에 접근합니다) ----------
+var provider = builder.Configuration["Database:Provider"] ?? "SqlServer";
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException("ConnectionStrings:Default 설정이 없습니다.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+        options.UseSqlite(connectionString);
+    else
+        options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure(3));
+});
+
+// ---------- Identity (계정 저장만 사용, 쿠키 로그인은 쓰지 않습니다) ----------
+builder.Services.AddIdentityCore<IdentityUser>(options =>
+    {
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
+        options.User.RequireUniqueEmail = false;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+// ---------- JWT 인증 (FE 와 에이전트는 Bearer 토큰으로 호출) ----------
+var jwt = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key 설정이 없습니다.");
+if (jwtKey.Length < 32) throw new InvalidOperationException("Jwt:Key 는 32자 이상이어야 합니다.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true, ValidIssuer = jwt["Issuer"],
+            ValidateAudience = true, ValidAudience = jwt["Audience"],
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateLifetime = true, ClockSkew = TimeSpan.FromMinutes(1),
+            NameClaimType = System.Security.Claims.ClaimTypes.Name,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanEdit", p => p.RequireRole(AppRoles.Admin, AppRoles.Manager));
+    options.AddPolicy("AdminOnly", p => p.RequireRole(AppRoles.Admin));
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+});
+
+// ---------- Application services ----------
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
+builder.Services.AddScoped<IAssetService, AssetService>();
+builder.Services.AddScoped<ILicenseService, LicenseService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IAgentService, AgentService>();
+
+builder.Services.AddControllers(options => options.Filters.Add<ApiExceptionFilter>())
+    .AddJsonOptions(o => o.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "EZ-ITAM API", Version = "v1" }));
+
+var app = builder.Build();
+
+var culture = new CultureInfo("ko-KR");
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(culture),
+    SupportedCultures = new[] { culture },
+    SupportedUICultures = new[] { culture }
+});
+
+// ---------- Database init ----------
+if (app.Configuration.GetValue("Database:AutoMigrate", true))
+{
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (db.Database.IsSqlite())
+        await db.Database.EnsureCreatedAsync();
+    else
+        await db.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(scope.ServiceProvider, app.Configuration, logger);
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
+
+public partial class Program { }

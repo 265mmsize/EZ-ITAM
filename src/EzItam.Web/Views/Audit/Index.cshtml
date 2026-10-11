@@ -1,4 +1,4 @@
-@model PagedResult<AuditLog>
+@model PageResult<AuditDto>
 @{
     ViewData["Title"] = "변경 이력";
     var entities = ViewBag.Entities as List<string> ?? new();
@@ -26,9 +26,9 @@
                 <td class="w-1">@l.Timestamp.Ymdhm()</td>
                 <td class="w-1">@l.EntityName</td>
                 <td class="w-1">
-                    @if (l.EntityName == nameof(Asset)) { <a asp-controller="Assets" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
-                    else if (l.EntityName == nameof(Employee)) { <a asp-controller="Employees" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
-                    else if (l.EntityName == nameof(SoftwareLicense)) { <a asp-controller="Licenses" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
+                    @if (l.EntityName == "AssetDto") { <a asp-controller="Assets" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
+                    else if (l.EntityName == "EmployeeDto") { <a asp-controller="Employees" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
+                    else if (l.EntityName == "SoftwareLicenseDto") { <a asp-controller="Licenses" asp-action="Details" asp-route-id="@l.EntityKey">@l.EntityKey</a> }
                     else { @l.EntityKey }
                 </td>
                 <td class="w-1"><span class="badge @(l.Action == AuditAction.Created ? "bg-success" : l.Action == AuditAction.Deleted ? "bg-danger" : "bg-secondary")">@l.Action</span></td>

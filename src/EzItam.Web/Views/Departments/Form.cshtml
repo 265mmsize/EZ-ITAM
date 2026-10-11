@@ -1,4 +1,4 @@
-@model Department
+@model DepartmentDto
 @{ var isNew = Model.Id == 0; ViewData["Title"] = isNew ? "부서 등록" : "부서 수정"; }
 <partial name="_PageHeader" model="@(ViewData["Title"]!.ToString())" />
 <div class="card" style="max-width:560px"><div class="card-body">

@@ -38,33 +38,3 @@ public class ChangePasswordViewModel
     public string ConfirmPassword { get; set; } = string.Empty;
 }
 
-public class UserListItem
-{
-    public string Id { get; set; } = string.Empty;
-    public string UserName { get; set; } = string.Empty;
-    public string? Email { get; set; }
-    public IList<string> Roles { get; set; } = new List<string>();
-    public bool IsLockedOut { get; set; }
-}
-
-public class UserFormViewModel
-{
-    public string? Id { get; set; }
-
-    [Required(ErrorMessage = "아이디는 필수입니다.")]
-    [StringLength(50)]
-    [Display(Name = "아이디")]
-    public string UserName { get; set; } = string.Empty;
-
-    [EmailAddress(ErrorMessage = "올바른 이메일 형식이 아닙니다.")]
-    [Display(Name = "이메일")]
-    public string? Email { get; set; }
-
-    [DataType(DataType.Password)]
-    [Display(Name = "비밀번호")]
-    public string? Password { get; set; }
-
-    [Required(ErrorMessage = "권한을 선택하세요.")]
-    [Display(Name = "권한")]
-    public string Role { get; set; } = "Viewer";
-}

@@ -15,17 +15,35 @@ services:
       timeout: 5s
       retries: 10
 
-  web:
-    build: .
+  # 서버 API (DB 접근은 이 서비스만 합니다)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       mssql:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_ENVIRONMENT: "Production"
       ConnectionStrings__Default: "Server=mssql,1433;Database=EzItam;User Id=sa;Password=EzItam!Str0ngPass;TrustServerCertificate=True;MultipleActiveResultSets=true"
-      Seed__SampleData: "true"
+      Seed__SampleData: "false"
+      Jwt__Key: "${JWT_KEY:?JWT_KEY 환경 변수를 32자 이상으로 지정하세요}"
+      Agent__EnrollmentKey: "${AGENT_ENROLL_KEY:?AGENT_ENROLL_KEY 환경 변수를 지정하세요}"
     ports:
       - "8080:8080"
+
+  # 본사 관리 화면 (API 만 호출)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    depends_on:
+      - api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      Api__BaseUrl: "http://api:8080/"
+    ports:
+      - "5006:8080"
 
 volumes:
   mssql-data:

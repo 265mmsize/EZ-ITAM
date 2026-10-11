@@ -1,4 +1,4 @@
-@model List<Vendor>
+@model List<VendorDto>
 @{ ViewData["Title"] = "공급업체"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">공급업체</h1>

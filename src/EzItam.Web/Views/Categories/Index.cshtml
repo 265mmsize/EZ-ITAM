@@ -1,4 +1,4 @@
-@model List<AssetCategory>
+@model List<CategoryDto>
 @{ ViewData["Title"] = "자산 분류"; var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager"); var isAdmin = User.IsInRole("Admin"); }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">자산 분류</h1>
