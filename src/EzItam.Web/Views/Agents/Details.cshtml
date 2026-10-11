@@ -1,0 +1,89 @@
+@model Agent
+@{
+    ViewData["Title"] = Model.HostName;
+    var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
+    var software = ViewBag.Software as List<AgentSoftware> ?? new();
+    var assets = ViewBag.Assets as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
+}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <a class="small text-muted" asp-action="Index">← 에이전트 목록</a>
+        <h1 class="h4 mb-0">@Model.HostName <span class="badge bg-secondary">@Model.Status.Display()</span> @if (Model.IsOnline) { <span class="badge bg-success">온라인</span> }</h1>
+    </div>
+    @if (canEdit)
+    {
+        <div class="d-flex gap-2">
+            @if (Model.Status != AgentStatus.Approved)
+            {
+                <form asp-action="Approve" asp-route-id="@Model.Id" method="post">@Html.AntiForgeryToken()<button class="btn btn-sm btn-success">승인</button></form>
+            }
+            @if (Model.Status != AgentStatus.Disabled)
+            {
+                <form asp-action="Disable" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('사용 중지하면 에이전트 토큰이 폐기됩니다. 계속할까요?');">@Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-danger">사용 중지</button></form>
+            }
+        </div>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-header">장치 정보</div><div class="card-body">
+            <dl class="dl-grid">
+                <dt>장치 UUID</dt><dd class="text-break"><code>@Model.DeviceUuid</code></dd>
+                <dt>시리얼</dt><dd>@(Model.SerialNumber ?? "-")</dd>
+                <dt>제조사 / 모델</dt><dd>@Model.Manufacturer @Model.Model</dd>
+                <dt>CPU</dt><dd>@(Model.CpuName ?? "-") @(Model.CpuCores.HasValue ? $"({Model.CpuCores}코어)" : "")</dd>
+                <dt>메모리</dt><dd>@(Model.TotalMemoryMb.HasValue ? $"{Model.TotalMemoryMb:#,##0} MB" : "-")</dd>
+                <dt>디스크</dt><dd>@(Model.DiskTotalGb.HasValue ? $"{Model.DiskTotalGb} GB" : "-")</dd>
+                <dt>OS</dt><dd>@Model.OsName @Model.OsVersion @Model.OsBuild</dd>
+                <dt>BitLocker</dt><dd>@(Model.BitLockerOn switch { true => "사용", false => "미사용", _ => "-" })</dd>
+                <dt>사용자</dt><dd>@(Model.LoggedOnUser ?? "-")</dd>
+                <dt>IP / MAC</dt><dd>@(Model.IpAddress ?? "-") / @(Model.MacAddresses ?? "-")</dd>
+                <dt>재부팅 대기</dt><dd>@(Model.RebootPending ? "예" : "아니오")</dd>
+                <dt>에이전트 버전</dt><dd>@Model.AgentVersion</dd>
+                <dt>등록 / 마지막 접속</dt><dd>@Model.EnrolledAt.Ymdhm() / @Model.LastSeenAt.Ymdhm()</dd>
+            </dl>
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card mb-3"><div class="card-header">자산 연결</div><div class="card-body">
+            @if (Model.Asset is not null)
+            {
+                <p>연결된 자산: <a asp-controller="Assets" asp-action="Details" asp-route-id="@Model.AssetId"><strong>@Model.Asset.AssetTag</strong> @Model.Asset.Name</a></p>
+            }
+            else
+            {
+                <p class="text-muted">연결된 자산이 없습니다. 시리얼 또는 호스트명이 같은 자산을 자동으로 찾아 연결하며, 아래에서 직접 지정할 수도 있습니다.</p>
+            }
+            @if (canEdit)
+            {
+                <form asp-action="Link" asp-route-id="@Model.Id" method="post" class="row g-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-8"><select name="assetId" class="form-select form-select-sm" asp-items="assets"><option value="">-- 연결 해제 --</option></select></div>
+                    <div class="col-md-4"><button class="btn btn-sm btn-primary">연결 저장</button></div>
+                </form>
+            }
+        </div></div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>설치 소프트웨어 (@ViewBag.SoftwareCount)</span>
+                <form method="get" class="d-flex gap-1">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input name="q" value="@ViewBag.Query" class="form-control form-control-sm" placeholder="소프트웨어 검색" />
+                    <button class="btn btn-sm btn-outline-secondary">검색</button>
+                </form>
+            </div>
+            <div class="table-responsive" style="max-height:560px;overflow:auto">
+            <table class="table table-sm mb-0">
+                <thead class="table-light sticky-top"><tr><th>이름</th><th>게시자</th><th>버전</th><th>설치일</th><th>출처</th></tr></thead>
+                <tbody>
+                @foreach (var s in software)
+                {
+                    <tr><td>@s.Name</td><td class="small">@s.Publisher</td><td class="small">@s.Version</td><td class="small">@s.InstallDate</td><td class="small text-muted">@s.Source</td></tr>
+                }
+                @if (software.Count == 0) { <tr><td colspan="5" class="text-muted">소프트웨어 정보가 없습니다.</td></tr> }
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+</div>

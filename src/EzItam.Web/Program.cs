@@ -62,6 +62,7 @@ builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IAgentService, AgentService>();
 
 builder.Services.AddControllersWithViews(options =>
 {

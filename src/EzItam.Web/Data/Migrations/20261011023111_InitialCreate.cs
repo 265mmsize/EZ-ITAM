@@ -353,6 +353,49 @@ namespace EzItam.Web.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Agents",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DeviceUuid = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    SerialNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    HostName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Manufacturer = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Model = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CpuName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CpuCores = table.Column<int>(type: "int", nullable: true),
+                    TotalMemoryMb = table.Column<long>(type: "bigint", nullable: true),
+                    OsName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    OsVersion = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    OsBuild = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    LoggedOnUser = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    MacAddresses = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    IpAddress = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    BitLockerOn = table.Column<bool>(type: "bit", nullable: true),
+                    DiskTotalGb = table.Column<long>(type: "bigint", nullable: true),
+                    AgentVersion = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    TokenHash = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
+                    EnrolledAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastSeenAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastInventoryAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    BootTimeUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RebootPending = table.Column<bool>(type: "bit", nullable: false),
+                    AssetId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Agents", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Agents_Assets_AssetId",
+                        column: x => x.AssetId,
+                        principalTable: "Assets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AssetAssignments",
                 columns: table => new
                 {
@@ -451,6 +494,61 @@ namespace EzItam.Web.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "AgentSoftware",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AgentId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Publisher = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Version = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    InstallDate = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Source = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgentSoftware", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AgentSoftware_Agents_AgentId",
+                        column: x => x.AgentId,
+                        principalTable: "Agents",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Agents_AssetId",
+                table: "Agents",
+                column: "AssetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Agents_DeviceUuid",
+                table: "Agents",
+                column: "DeviceUuid",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Agents_HostName",
+                table: "Agents",
+                column: "HostName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Agents_SerialNumber",
+                table: "Agents",
+                column: "SerialNumber");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Agents_TokenHash",
+                table: "Agents",
+                column: "TokenHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgentSoftware_AgentId_Name",
+                table: "AgentSoftware",
+                columns: new[] { "AgentId", "Name" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -610,6 +708,9 @@ namespace EzItam.Web.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AgentSoftware");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
@@ -635,6 +736,9 @@ namespace EzItam.Web.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "MaintenanceRecords");
+
+            migrationBuilder.DropTable(
+                name: "Agents");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

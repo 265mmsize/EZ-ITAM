@@ -28,6 +28,8 @@ public class AppDbContext : IdentityDbContext
     public DbSet<SoftwareLicense> SoftwareLicenses => Set<SoftwareLicense>();
     public DbSet<LicenseAssignment> LicenseAssignments => Set<LicenseAssignment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Agent> Agents => Set<Agent>();
+    public DbSet<AgentSoftware> AgentSoftware => Set<AgentSoftware>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -99,6 +101,23 @@ public class AppDbContext : IdentityDbContext
             e.HasOne(a => a.Employee).WithMany(emp => emp.LicenseAssignments).HasForeignKey(a => a.EmployeeId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        builder.Entity<Agent>(e =>
+        {
+            e.ToTable("Agents");
+            e.HasIndex(a => a.DeviceUuid).IsUnique();
+            e.HasIndex(a => a.SerialNumber);
+            e.HasIndex(a => a.HostName);
+            e.HasIndex(a => a.TokenHash);
+            e.HasOne(a => a.Asset).WithMany(x => x.Agents).HasForeignKey(a => a.AssetId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<AgentSoftware>(e =>
+        {
+            e.ToTable("AgentSoftware");
+            e.HasIndex(s => new { s.AgentId, s.Name });
+            e.HasOne(s => s.Agent).WithMany(a => a.Software).HasForeignKey(s => s.AgentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<AuditLog>(e =>
         {
             e.ToTable("AuditLogs");
@@ -134,7 +153,7 @@ public class AppDbContext : IdentityDbContext
     private static readonly HashSet<string> AuditedEntities = new()
     {
         nameof(Asset), nameof(AssetCategory), nameof(Location), nameof(Department), nameof(Employee),
-        nameof(Vendor), nameof(AssetAssignment), nameof(MaintenanceRecord), nameof(SoftwareLicense), nameof(LicenseAssignment)
+        nameof(Vendor), nameof(AssetAssignment), nameof(MaintenanceRecord), nameof(SoftwareLicense), nameof(LicenseAssignment), nameof(Agent)
     };
 
     /// <summary>

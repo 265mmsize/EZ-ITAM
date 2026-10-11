@@ -97,6 +97,7 @@ public class Asset
     public ICollection<AssetAssignment> Assignments { get; set; } = new List<AssetAssignment>();
     public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
     public ICollection<LicenseAssignment> LicenseAssignments { get; set; } = new List<LicenseAssignment>();
+    public ICollection<Agent> Agents { get; set; } = new List<Agent>();
 
     [NotMapped]
     public bool IsWarrantyExpired => WarrantyExpiry.HasValue && WarrantyExpiry.Value.Date < DateTime.Today;

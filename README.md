@@ -39,6 +39,8 @@ EZ-ITAM.sln
 │  ├─ Services/                 AssetService, LicenseService, DashboardService, CSV
 │  ├─ ViewModels/, Views/, wwwroot/
 │  └─ appsettings*.json
+├─ src/EzItam.Agent/            Windows PC 에이전트 (.NET 8 Worker Service)
+├─ src/EzItam.Contracts/        서버·에이전트 공용 DTO
 ├─ tests/EzItam.Tests/          xUnit 단위 테스트 (SQLite in-memory)
 ├─ db/schema.sql                SQL Server 용 DDL (EF 마이그레이션에서 생성, 멱등)
 └─ docker-compose.yml           SQL Server + 앱 빠른 실행
@@ -103,6 +105,57 @@ docker compose up --build
 | `Database:AutoMigrate` | 시작 시 마이그레이션·시드 적용 | true |
 | `Seed:AdminUser` / `Seed:AdminPassword` | 최초 관리자 계정 | admin / Admin!2345 |
 | `Seed:SampleData` | 샘플 데이터 생성 | false (Development: true) |
+## PC 에이전트 (1차 범위)
+
+벤치마크 보고서의 권고에 따라 **Windows 10/11 전용 .NET 8 에이전트**를 추가했습니다. 에이전트가 먼저 서버에 접속하는 **아웃바운드 전용 HTTPS** 구조이며, 서버 응답으로 접속 주기와 인벤토리 전송 여부를 제어합니다.
+
+| 구성 | 위치 | 역할 |
+|---|---|---|
+| 공용 계약 | `src/EzItam.Contracts` | 등록, heartbeat, 인벤토리 DTO |
+| 에이전트 | `src/EzItam.Agent` | Windows 서비스(`EzItamAgent`). WMI·레지스트리로 하드웨어와 설치 SW 수집 |
+| 서버 API | `src/EzItam.Web` `AgentApiController` | `api/agent/enroll`, `heartbeat`, `inventory` |
+| 관리 화면 | `PC 에이전트` 메뉴 | 승인, 사용 중지, 자산 연결, 설치 SW 조회 |
+
+### 동작 방식
+
+1. 에이전트가 등록 키로 `enroll` 을 호출합니다. 서버는 장치를 **승인 대기**로 저장하고 토큰을 발급합니다. 토큰은 서버에 해시로만 저장됩니다.
+2. 관리자가 **승인**하면 다음 heartbeat 부터 인벤토리가 전송됩니다.
+3. 인벤토리는 gzip 으로 압축해 전송하며, 설치 SW 목록은 최신 수집 결과로 전체 교체됩니다.
+4. 시리얼번호가 같은 자산을 자동으로 찾아 연결합니다. 자산 대장에 값이 비어 있는 항목만 채우고 기존 값은 덮어쓰지 않습니다.
+5. 전송이 실패하면 다음 주기에 최신 값을 다시 수집해 보냅니다. 장기간 오프라인이어도 최신 상태만 필요하므로 별도 대기열은 두지 않았습니다.
+
+### 서버 설정
+
+```json
+"Agent": {
+  "EnrollmentKey": "여기를 반드시 변경하세요"
+}
+```
+
+등록 키는 설치 파일과 서버가 같은 값을 써야 합니다. 기본값을 그대로 운영하지 마세요.
+
+### 에이전트 설치 (Windows PC)
+
+```powershell
+# 1) 게시 (self-contained 단일 파일, .NET 8 런타임 설치 불필요)
+dotnet publish src/EzItam.Agent -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish\agent
+
+# 2) publish 폴더의 appsettings.json 에서 ServerUrl 과 EnrollmentKey 를 설정
+
+# 3) 관리자 PowerShell 에서 서비스 등록
+sc.exe create EzItamAgent binPath= "C:\Program Files\EzItam\Agent\EzItam.Agent.exe" start= auto
+sc.exe failure EzItamAgent reset= 86400 actions= restart/60000/restart/60000/restart/60000
+sc.exe start EzItamAgent
+```
+
+- 상태 파일은 `%ProgramData%\EzItam\Agent\agent-state.json` 에 저장되며, 토큰은 DPAPI(LocalMachine)로 보호됩니다.
+- 하드웨어 일부(BitLocker)는 관리자 권한이 필요하므로 LocalSystem 서비스로 실행해야 합니다.
+- 개발 환경에서는 `Agent:UseFakeCollector=true` 로 실제 PC 정보 없이 프로토콜만 확인할 수 있습니다.
+
+### 1차 범위에서 제외한 항목
+
+정규화 카탈로그, 라이선스 권리(ELP) 관리, 소프트웨어 사용량 측정, 원격 명령, 자동 업데이트는 2차 과제입니다.
+
 ## 라이선스 / 기타
 
 사내 사용 목적의 프로젝트입니다. 기여·이슈는 GitHub 저장소를 이용해 주세요.

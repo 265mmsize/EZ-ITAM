@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EzItam.Agent</RootNamespace>
+    <AssemblyName>EzItam.Agent</AssemblyName>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::IsOSPlatform('windows'))">10.0.14393.0</SupportedOSPlatformVersion>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EzItam.Contracts\EzItam.Contracts.csproj" />
+  </ItemGroup>
+</Project>

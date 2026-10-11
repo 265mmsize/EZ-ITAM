@@ -22,6 +22,162 @@ namespace EzItam.Web.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EzItam.Web.Models.Entities.Agent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AgentVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int?>("AssetId")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("BitLockerOn")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("BootTimeUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CpuCores")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CpuName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DeviceUuid")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<long?>("DiskTotalGb")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("EnrolledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HostName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("LastInventoryAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LoggedOnUser")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MacAddresses")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Manufacturer")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OsBuild")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("OsName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OsVersion")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("RebootPending")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<long?>("TotalMemoryMb")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("DeviceUuid")
+                        .IsUnique();
+
+                    b.HasIndex("HostName");
+
+                    b.HasIndex("SerialNumber");
+
+                    b.HasIndex("TokenHash");
+
+                    b.ToTable("Agents", (string)null);
+                });
+
+            modelBuilder.Entity("EzItam.Web.Models.Entities.AgentSoftware", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AgentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InstallDate")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Publisher")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentId", "Name");
+
+                    b.ToTable("AgentSoftware", (string)null);
+                });
+
             modelBuilder.Entity("EzItam.Web.Models.Entities.Asset", b =>
                 {
                     b.Property<int>("Id")
@@ -728,6 +884,27 @@ namespace EzItam.Web.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("EzItam.Web.Models.Entities.Agent", b =>
+                {
+                    b.HasOne("EzItam.Web.Models.Entities.Asset", "Asset")
+                        .WithMany("Agents")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("EzItam.Web.Models.Entities.AgentSoftware", b =>
+                {
+                    b.HasOne("EzItam.Web.Models.Entities.Agent", "Agent")
+                        .WithMany("Software")
+                        .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Agent");
+                });
+
             modelBuilder.Entity("EzItam.Web.Models.Entities.Asset", b =>
                 {
                     b.HasOne("EzItam.Web.Models.Entities.AssetCategory", "Category")
@@ -893,8 +1070,15 @@ namespace EzItam.Web.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("EzItam.Web.Models.Entities.Agent", b =>
+                {
+                    b.Navigation("Software");
+                });
+
             modelBuilder.Entity("EzItam.Web.Models.Entities.Asset", b =>
                 {
+                    b.Navigation("Agents");
+
                     b.Navigation("Assignments");
 
                     b.Navigation("LicenseAssignments");

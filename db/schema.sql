@@ -13,7 +13,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetRoles] (
@@ -28,7 +28,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetUsers] (
@@ -54,7 +54,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AssetCategories] (
@@ -70,7 +70,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AuditLogs] (
@@ -88,7 +88,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [Departments] (
@@ -103,7 +103,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [Locations] (
@@ -120,7 +120,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [Vendors] (
@@ -137,7 +137,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetRoleClaims] (
@@ -153,7 +153,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetUserClaims] (
@@ -169,7 +169,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetUserLogins] (
@@ -185,7 +185,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetUserRoles] (
@@ -200,7 +200,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AspNetUserTokens] (
@@ -216,7 +216,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [Employees] (
@@ -235,7 +235,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [SoftwareLicenses] (
@@ -261,7 +261,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [Assets] (
@@ -299,7 +299,45 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [Agents] (
+        [Id] int NOT NULL IDENTITY,
+        [DeviceUuid] nvarchar(64) NOT NULL,
+        [SerialNumber] nvarchar(100) NULL,
+        [HostName] nvarchar(100) NOT NULL,
+        [Manufacturer] nvarchar(100) NULL,
+        [Model] nvarchar(100) NULL,
+        [CpuName] nvarchar(100) NULL,
+        [CpuCores] int NULL,
+        [TotalMemoryMb] bigint NULL,
+        [OsName] nvarchar(100) NULL,
+        [OsVersion] nvarchar(100) NULL,
+        [OsBuild] nvarchar(20) NULL,
+        [LoggedOnUser] nvarchar(100) NULL,
+        [MacAddresses] nvarchar(300) NULL,
+        [IpAddress] nvarchar(100) NULL,
+        [BitLockerOn] bit NULL,
+        [DiskTotalGb] bigint NULL,
+        [AgentVersion] nvarchar(32) NOT NULL,
+        [Status] int NOT NULL,
+        [TokenHash] nvarchar(64) NULL,
+        [EnrolledAt] datetime2 NOT NULL,
+        [LastSeenAt] datetime2 NULL,
+        [LastInventoryAt] datetime2 NULL,
+        [BootTimeUtc] datetime2 NULL,
+        [RebootPending] bit NOT NULL,
+        [AssetId] int NULL,
+        CONSTRAINT [PK_Agents] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Agents_Assets_AssetId] FOREIGN KEY ([AssetId]) REFERENCES [Assets] ([Id]) ON DELETE SET NULL
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [AssetAssignments] (
@@ -320,7 +358,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [LicenseAssignments] (
@@ -342,7 +380,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE TABLE [MaintenanceRecords] (
@@ -364,7 +402,80 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [AgentSoftware] (
+        [Id] bigint NOT NULL IDENTITY,
+        [AgentId] int NOT NULL,
+        [Name] nvarchar(300) NOT NULL,
+        [Publisher] nvarchar(200) NULL,
+        [Version] nvarchar(100) NULL,
+        [InstallDate] nvarchar(20) NULL,
+        [Source] nvarchar(20) NOT NULL,
+        CONSTRAINT [PK_AgentSoftware] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_AgentSoftware_Agents_AgentId] FOREIGN KEY ([AgentId]) REFERENCES [Agents] ([Id]) ON DELETE CASCADE
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Agents_AssetId] ON [Agents] ([AssetId]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_Agents_DeviceUuid] ON [Agents] ([DeviceUuid]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Agents_HostName] ON [Agents] ([HostName]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Agents_SerialNumber] ON [Agents] ([SerialNumber]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Agents_TokenHash] ON [Agents] ([TokenHash]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_AgentSoftware_AgentId_Name] ON [AgentSoftware] ([AgentId], [Name]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AspNetRoleClaims_RoleId] ON [AspNetRoleClaims] ([RoleId]);
@@ -373,7 +484,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     EXEC(N'CREATE UNIQUE INDEX [RoleNameIndex] ON [AspNetRoles] ([NormalizedName]) WHERE [NormalizedName] IS NOT NULL');
@@ -382,7 +493,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AspNetUserClaims_UserId] ON [AspNetUserClaims] ([UserId]);
@@ -391,7 +502,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AspNetUserLogins_UserId] ON [AspNetUserLogins] ([UserId]);
@@ -400,7 +511,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AspNetUserRoles_RoleId] ON [AspNetUserRoles] ([RoleId]);
@@ -409,7 +520,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [EmailIndex] ON [AspNetUsers] ([NormalizedEmail]);
@@ -418,7 +529,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     EXEC(N'CREATE UNIQUE INDEX [UserNameIndex] ON [AspNetUsers] ([NormalizedUserName]) WHERE [NormalizedUserName] IS NOT NULL');
@@ -427,7 +538,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AssetAssignments_AssetId_ReturnedAt] ON [AssetAssignments] ([AssetId], [ReturnedAt]);
@@ -436,7 +547,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AssetAssignments_EmployeeId] ON [AssetAssignments] ([EmployeeId]);
@@ -445,7 +556,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE UNIQUE INDEX [IX_AssetCategories_Code] ON [AssetCategories] ([Code]);
@@ -454,7 +565,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE UNIQUE INDEX [IX_Assets_AssetTag] ON [Assets] ([AssetTag]);
@@ -463,7 +574,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Assets_CategoryId] ON [Assets] ([CategoryId]);
@@ -472,7 +583,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Assets_CurrentEmployeeId] ON [Assets] ([CurrentEmployeeId]);
@@ -481,7 +592,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Assets_LocationId] ON [Assets] ([LocationId]);
@@ -490,7 +601,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Assets_SerialNumber] ON [Assets] ([SerialNumber]);
@@ -499,7 +610,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Assets_Status] ON [Assets] ([Status]);
@@ -508,7 +619,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Assets_VendorId] ON [Assets] ([VendorId]);
@@ -517,7 +628,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AuditLogs_EntityName_EntityKey] ON [AuditLogs] ([EntityName], [EntityKey]);
@@ -526,7 +637,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_AuditLogs_Timestamp] ON [AuditLogs] ([Timestamp]);
@@ -535,7 +646,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE UNIQUE INDEX [IX_Departments_Code] ON [Departments] ([Code]);
@@ -544,7 +655,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_Employees_DepartmentId] ON [Employees] ([DepartmentId]);
@@ -553,7 +664,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE UNIQUE INDEX [IX_Employees_EmployeeNo] ON [Employees] ([EmployeeNo]);
@@ -562,7 +673,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_LicenseAssignments_AssetId] ON [LicenseAssignments] ([AssetId]);
@@ -571,7 +682,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_LicenseAssignments_EmployeeId] ON [LicenseAssignments] ([EmployeeId]);
@@ -580,7 +691,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_LicenseAssignments_SoftwareLicenseId_ReleasedAt] ON [LicenseAssignments] ([SoftwareLicenseId], [ReleasedAt]);
@@ -589,7 +700,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_MaintenanceRecords_AssetId] ON [MaintenanceRecords] ([AssetId]);
@@ -598,7 +709,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_MaintenanceRecords_VendorId] ON [MaintenanceRecords] ([VendorId]);
@@ -607,7 +718,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_SoftwareLicenses_Name] ON [SoftwareLicenses] ([Name]);
@@ -616,7 +727,7 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     CREATE INDEX [IX_SoftwareLicenses_VendorId] ON [SoftwareLicenses] ([VendorId]);
@@ -625,11 +736,11 @@ GO
 
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
-    WHERE [MigrationId] = N'20261011022539_InitialCreate'
+    WHERE [MigrationId] = N'20261011023111_InitialCreate'
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261011022539_InitialCreate', N'8.0.11');
+    VALUES (N'20261011023111_InitialCreate', N'8.0.11');
 END;
 GO
 
