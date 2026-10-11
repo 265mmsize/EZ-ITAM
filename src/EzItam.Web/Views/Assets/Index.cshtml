@@ -8,10 +8,10 @@
     string PageUrl(int p) => Url.Action("Index", new { f.Search, f.CategoryId, f.Status, f.LocationId, f.DepartmentId, f.EmployeeId, f.WarrantyExpiringOnly, f.Sort, f.Desc, f.PageSize, Page = p })!;
 }
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <h1 class="h4 mb-0">하드웨어 자산 <span class="text-muted fs-6">총 @Model.Result.TotalCount.ToString("#,##0")건</span></h1>
+    <h1 class="h4 mb-0">@L["assets.title"] <span class="text-muted fs-6">@L["assets.count", Model.Result.TotalCount.ToString("#,##0")]</span></h1>
     <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-all-route-data="@(new Dictionary<string,string?>{{"search",f.Search},{"categoryId",f.CategoryId?.ToString()},{"status",f.Status?.ToString()},{"locationId",f.LocationId?.ToString()},{"departmentId",f.DepartmentId?.ToString()},{"employeeId",f.EmployeeId?.ToString()},{"warrantyExpiringOnly",f.WarrantyExpiringOnly.ToString()},{"sort",f.Sort},{"desc",f.Desc.ToString()}})">CSV 내보내기</a>
-        @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">+ 자산 등록</a> }
+        <a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-all-route-data="@(new Dictionary<string,string?>{{"search",f.Search},{"categoryId",f.CategoryId?.ToString()},{"status",f.Status?.ToString()},{"locationId",f.LocationId?.ToString()},{"departmentId",f.DepartmentId?.ToString()},{"employeeId",f.EmployeeId?.ToString()},{"warrantyExpiringOnly",f.WarrantyExpiringOnly.ToString()},{"sort",f.Sort},{"desc",f.Desc.ToString()}})">@L["assets.export"]</a>
+        @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">@L["assets.new"]</a> }
     </div>
 </div>
 
@@ -19,33 +19,33 @@
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-3 col-lg">
-                <label class="form-label small mb-0">검색</label>
-                <input name="search" value="@f.Search" class="form-control form-control-sm" placeholder="자산번호, 자산명, S/N, 모델, 호스트, IP, 사용자" />
+                <label class="form-label small mb-0">@L["assets.search"]</label>
+                <input name="search" value="@f.Search" class="form-control form-control-sm" placeholder="@L["assets.search_placeholder"]" />
             </div>
             <div class="col-md-2">
-                <label class="form-label small mb-0">분류</label>
-                <select name="categoryId" class="form-select form-select-sm" asp-items="ViewBag.Categories"><option value="">전체</option></select>
+                <label class="form-label small mb-0">@L["assets.category"]</label>
+                <select name="categoryId" class="form-select form-select-sm" asp-items="ViewBag.Categories"><option value="">@L["assets.all"]</option></select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small mb-0">상태</label>
-                <select name="status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">전체</option></select>
+                <label class="form-label small mb-0">@L["assets.status"]</label>
+                <select name="status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">@L["assets.all"]</option></select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small mb-0">위치</label>
-                <select name="locationId" class="form-select form-select-sm" asp-items="ViewBag.Locations"><option value="">전체</option></select>
+                <label class="form-label small mb-0">@L["assets.location"]</label>
+                <select name="locationId" class="form-select form-select-sm" asp-items="ViewBag.Locations"><option value="">@L["assets.all"]</option></select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small mb-0">부서</label>
-                <select name="departmentId" class="form-select form-select-sm" asp-items="ViewBag.Departments"><option value="">전체</option></select>
+                <label class="form-label small mb-0">@L["assets.department"]</label>
+                <select name="departmentId" class="form-select form-select-sm" asp-items="ViewBag.Departments"><option value="">@L["assets.all"]</option></select>
             </div>
             <div class="col-md-auto d-flex gap-1 text-nowrap">
-                <button class="btn btn-sm btn-primary">검색</button>
-                <a class="btn btn-sm btn-outline-secondary" asp-action="Index">초기화</a>
+                <button class="btn btn-sm btn-primary">@L["assets.go"]</button>
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index">@L["assets.reset"]</a>
             </div>
             <div class="col-12">
                 <div class="form-check form-check-inline">
                     <input type="checkbox" class="form-check-input" id="warrantyExpiringOnly" name="warrantyExpiringOnly" value="true" @(f.WarrantyExpiringOnly ? "checked" : "") />
-                    <label class="form-check-label small" for="warrantyExpiringOnly">보증 만료(임박 포함)만</label>
+                    <label class="form-check-label small" for="warrantyExpiringOnly">@L["assets.warranty_only"]</label>
                 </div>
                 <input type="hidden" name="sort" value="@f.Sort" /><input type="hidden" name="desc" value="@f.Desc.ToString().ToLower()" />
             </div>
@@ -58,15 +58,15 @@
         <table class="table table-sm table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th><a href="@SortUrl("tag")">자산번호@(SortMark("tag"))</a></th>
-                    <th><a href="@SortUrl("name")">자산명@(SortMark("name"))</a></th>
-                    <th><a href="@SortUrl("category")">분류@(SortMark("category"))</a></th>
-                    <th><a href="@SortUrl("status")">상태@(SortMark("status"))</a></th>
-                    <th>모델 / S/N</th>
-                    <th>사용자</th>
-                    <th>위치</th>
-                    <th><a href="@SortUrl("purchase")">구매일@(SortMark("purchase"))</a></th>
-                    <th><a href="@SortUrl("warranty")">보증만료@(SortMark("warranty"))</a></th>
+                    <th><a href="@SortUrl("tag")">@L["assets.col.tag"]@(SortMark("tag"))</a></th>
+                    <th><a href="@SortUrl("name")">@L["assets.col.name"]@(SortMark("name"))</a></th>
+                    <th><a href="@SortUrl("category")">@L["assets.col.category"]@(SortMark("category"))</a></th>
+                    <th><a href="@SortUrl("status")">@L["assets.col.status"]@(SortMark("status"))</a></th>
+                    <th>@L["assets.col.model"]</th>
+                    <th>@L["assets.col.user"]</th>
+                    <th>@L["assets.col.location"]</th>
+                    <th><a href="@SortUrl("purchase")">@L["assets.col.purchase"]@(SortMark("purchase"))</a></th>
+                    <th><a href="@SortUrl("warranty")">@L["assets.col.warranty"]@(SortMark("warranty"))</a></th>
                 </tr>
             </thead>
             <tbody>
@@ -91,7 +91,7 @@
                     <td class="@(a.IsWarrantyExpired ? "text-danger" : a.IsWarrantyExpiringSoon ? "text-warning fw-bold" : "")">@a.WarrantyExpiry.Ymd()</td>
                 </tr>
             }
-            @if (Model.Result.Items.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">조건에 맞는 자산이 없습니다.</td></tr> }
+            @if (Model.Result.Items.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">@L["assets.empty"]</td></tr> }
             </tbody>
         </table>
     </div>

@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Update="Resources\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 화면은 DB를 직접 보지 않고 REST API 로만 데이터를 주고받습니다. 공용 DTO 외에는 참조하지 않습니다. -->
     <ProjectReference Include="..\EzItam.Contracts\EzItam.Contracts.csproj" />
   </ItemGroup>

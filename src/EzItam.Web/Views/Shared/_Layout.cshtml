@@ -23,34 +23,39 @@
             <span class="brand-mark">EZ</span><span class="brand-text">ITAM</span>
         </a>
         <ul class="nav flex-column">
-            <li class="nav-section">자산</li>
-            <li><a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index">대시보드</a></li>
-            <li><a class="nav-link @Active("Assets")" asp-controller="Assets" asp-action="Index">하드웨어 자산</a></li>
-            <li><a class="nav-link @Active("Agents")" asp-controller="Agents" asp-action="Index">PC 에이전트</a></li>
-            <li><a class="nav-link @Active("Licenses")" asp-controller="Licenses" asp-action="Index">소프트웨어 라이선스</a></li>
-            <li><a class="nav-link @Active("Maintenance")" asp-controller="Maintenance" asp-action="Index">유지보수</a></li>
-            <li class="nav-section">조직</li>
-            <li><a class="nav-link @Active("Employees")" asp-controller="Employees" asp-action="Index">사원</a></li>
-            <li><a class="nav-link @Active("Departments")" asp-controller="Departments" asp-action="Index">부서</a></li>
-            <li class="nav-section">기준정보</li>
-            <li><a class="nav-link @Active("Categories")" asp-controller="Categories" asp-action="Index">자산 분류</a></li>
-            <li><a class="nav-link @Active("Locations")" asp-controller="Locations" asp-action="Index">위치</a></li>
-            <li><a class="nav-link @Active("Vendors")" asp-controller="Vendors" asp-action="Index">공급업체</a></li>
-            <li class="nav-section">시스템</li>
-            <li><a class="nav-link @Active("Audit")" asp-controller="Audit" asp-action="Index">변경 이력</a></li>
+            <li class="nav-section">@L["nav.section.assets"]</li>
+            <li><a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index">@L["nav.dashboard"]</a></li>
+            <li><a class="nav-link @Active("Assets")" asp-controller="Assets" asp-action="Index">@L["nav.assets"]</a></li>
+            <li><a class="nav-link @Active("Agents")" asp-controller="Agents" asp-action="Index">@L["nav.agents"]</a></li>
+            <li><a class="nav-link @Active("Licenses")" asp-controller="Licenses" asp-action="Index">@L["nav.licenses"]</a></li>
+            <li><a class="nav-link @Active("Maintenance")" asp-controller="Maintenance" asp-action="Index">@L["nav.maintenance"]</a></li>
+            <li class="nav-section">@L["nav.section.org"]</li>
+            <li><a class="nav-link @Active("Employees")" asp-controller="Employees" asp-action="Index">@L["nav.employees"]</a></li>
+            <li><a class="nav-link @Active("Departments")" asp-controller="Departments" asp-action="Index">@L["nav.departments"]</a></li>
+            <li class="nav-section">@L["nav.section.master"]</li>
+            <li><a class="nav-link @Active("Categories")" asp-controller="Categories" asp-action="Index">@L["nav.categories"]</a></li>
+            <li><a class="nav-link @Active("Locations")" asp-controller="Locations" asp-action="Index">@L["nav.locations"]</a></li>
+            <li><a class="nav-link @Active("Vendors")" asp-controller="Vendors" asp-action="Index">@L["nav.vendors"]</a></li>
+            <li class="nav-section">@L["nav.section.system"]</li>
+            <li><a class="nav-link @Active("Audit")" asp-controller="Audit" asp-action="Index">@L["nav.audit"]</a></li>
             @if (isAdmin)
             {
-                <li><a class="nav-link @Active("Users")" asp-controller="Users" asp-action="Index">사용자 관리</a></li>
+                <li><a class="nav-link @Active("Users")" asp-controller="Users" asp-action="Index">@L["nav.users"]</a></li>
             }
         </ul>
         <div class="mt-auto sidebar-footer">
             <div class="small text-truncate">@User.Identity!.Name</div>
-            <div class="small text-muted">@(isAdmin ? "관리자" : canEdit ? "담당자" : "조회자")</div>
+            <div class="small text-muted">@(isAdmin ? L["role.admin"] : canEdit ? L["role.manager"] : L["role.viewer"])</div>
+            <div class="d-flex gap-1 mt-2 small">
+                <a class="text-white-50" href="/Home/SetLanguage?culture=ko-KR&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">한국어</a> ·
+                <a class="text-white-50" href="/Home/SetLanguage?culture=en-US&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">English</a> ·
+                <a class="text-white-50" href="/Home/SetLanguage?culture=vi-VN&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">Tiếng Việt</a>
+            </div>
             <div class="d-flex gap-2 mt-2">
-                <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="ChangePassword">비밀번호</a>
+                <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="ChangePassword">@L["nav.password"]</a>
                 <form asp-controller="Account" asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-light">로그아웃</button>
+                    <button type="submit" class="btn btn-sm btn-outline-light">@L["nav.logout"]</button>
                 </form>
             </div>
         </div>

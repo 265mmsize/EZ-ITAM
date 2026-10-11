@@ -1,6 +1,8 @@
 using System.Globalization;
 using EzItam.Web.Api;
 using EzItam.Web.Infrastructure;
+using EzItam.Web.Localization;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
 
@@ -28,14 +30,18 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddItamApi(builder.Configuration);
 
+// 다국어: ko(기본), en, vi. 문자열은 Resources/Strings.{culture}.json 에서 읽습니다.
+builder.Services.AddSingleton<JsonLocalizerStore>();
+builder.Services.AddSingleton(typeof(IStringLocalizer<>), typeof(JsonStringLocalizer<>));
+
 var app = builder.Build();
 
-var culture = new CultureInfo("ko-KR");
+var supported = new[] { new CultureInfo("ko-KR"), new CultureInfo("en-US"), new CultureInfo("vi-VN") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
-    DefaultRequestCulture = new RequestCulture(culture),
-    SupportedCultures = new[] { culture },
-    SupportedUICultures = new[] { culture }
+    DefaultRequestCulture = new RequestCulture(supported[0]),
+    SupportedCultures = supported,
+    SupportedUICultures = supported
 });
 
 if (!app.Environment.IsDevelopment()) app.UseHsts();
