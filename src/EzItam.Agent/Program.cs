@@ -7,6 +7,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddWindowsService(o => o.ServiceName = "EzItamAgent");
 builder.Services.Configure<AgentOptions>(builder.Configuration.GetSection("Agent"));
 builder.Services.AddSingleton<AgentStateStore>();
+builder.Services.AddSingleton<AgentHistoryStore>();
 builder.Services.AddHttpClient<AgentApiClient>();
 
 if (OperatingSystem.IsWindows() && !builder.Configuration.GetValue<bool>("Agent:UseFakeCollector"))
