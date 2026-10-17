@@ -17,6 +17,7 @@ public interface IAssetService
     Task<AssetAssignment> CheckInAsync(int assetId, AssetStatus newStatus, int? locationId, string? notes, CancellationToken ct = default);
     Task ChangeStatusAsync(int assetId, AssetStatus newStatus, string? notes, CancellationToken ct = default);
     Task<string> GenerateAssetTagAsync(int categoryId, CancellationToken ct = default);
+    Task<List<AssetLabelsDto>> GetListAssetLabelsByIdsAsync(List<int> assetIds, CancellationToken ct = default);
 }
 
 public class AssetService : IAssetService
@@ -271,5 +272,20 @@ public class AssetService : IAssetService
             .DefaultIfEmpty(0)
             .Max();
         return $"{prefix}{max + 1:0000}";
+    }
+
+    public async Task<List<AssetLabelsDto>> GetListAssetLabelsByIdsAsync(List<int> assetIds, CancellationToken ct = default)
+    {
+        var query = _db.Assets
+            .Where(a => assetIds.Contains(a.Id))
+            .Select(a => new AssetLabelsDto
+            {
+                AssetId = a.Id,
+                AssetTag = a.AssetTag,
+                AssetName = a.Name,
+                SerialNumber = a.SerialNumber,
+                IpAddress = a.IpAddress
+            });
+        return await query.ToListAsync(ct);
     }
 }

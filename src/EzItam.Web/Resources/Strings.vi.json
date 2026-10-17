@@ -66,6 +66,8 @@
   "assets.col.purchase": "Ngày mua",
   "assets.col.warranty": "Hết bảo hành",
   "assets.empty": "Không có tài sản nào phù hợp điều kiện.",
+  "assets.print_label": "In nhãn",
+  "assets.select_at_least_one": "Chọn ít nhất 1 tài sản.",
   "common.save": "Lưu",
   "common.cancel": "Hủy",
   "common.delete": "Xóa",

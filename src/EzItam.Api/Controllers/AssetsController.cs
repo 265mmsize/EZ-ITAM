@@ -102,4 +102,22 @@ public class AssetsController : ApiControllerBase
         await _assets.ChangeStatusAsync(id, req.NewStatus, req.Notes, ct);
         return NoContent();
     }
+
+    [HttpGet("labels")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<ActionResult> GetLabels([FromQuery] string ids, CancellationToken ct)
+    {
+        try
+        {
+            byte[] base64Decoded = Convert.FromBase64String(ids);
+            var idList = System.Text.Encoding.UTF8.GetString(base64Decoded).Split(',').Select(int.Parse).ToList();
+            var res = await _assets.GetListAssetLabelsByIdsAsync(idList, ct);
+            return Ok(res);
+
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

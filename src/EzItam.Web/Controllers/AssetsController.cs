@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
-public class AssetsController : BaseController
+public class AssetsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : BaseController(api, loc)
 {
-    public AssetsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
-
     public async Task<IActionResult> Index(AssetFilter filter)
     {
         var result = await Api.SearchAssetsAsync(filter);
@@ -208,8 +206,22 @@ public class AssetsController : BaseController
         return View(model);
     }
 
-    private List<SelectListItem> CheckInStatuses()
-        => EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+    [HttpGet]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> PrintLabels(string ids)
+    {
+        if (string.IsNullOrEmpty(ids))
+        {
+            return BadRequest();
+        }
+        var res = await Api.ListAssetLabelAsync(ids);
+
+        return View(nameof(PrintLabels), res);
+    }
+
+
+    private static List<SelectListItem> CheckInStatuses()
+        => [.. EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString())];
 
     private async Task PopulateFormListsAsync(AssetDto asset)
     {

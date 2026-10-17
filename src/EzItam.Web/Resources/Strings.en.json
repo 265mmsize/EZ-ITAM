@@ -66,6 +66,8 @@
   "assets.col.purchase": "Purchase date",
   "assets.col.warranty": "Warranty end",
   "assets.empty": "No assets match the conditions.",
+  "assets.print_label": "Print label",
+  "assets.select_at_least_one": "Please select at least one asset.",
   "common.save": "Save",
   "common.cancel": "Cancel",
   "common.delete": "Delete",
