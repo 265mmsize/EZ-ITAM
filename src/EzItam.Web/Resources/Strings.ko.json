@@ -66,6 +66,8 @@
   "assets.col.purchase": "구매일",
   "assets.col.warranty": "보증만료",
   "assets.empty": "조건에 맞는 자산이 없습니다.",
+  "assets.print_label": "라벨 인쇄",
+  "assets.select_at_least_one": "최소 한 가지 이상의 자산을 선택해 주세요.",
   "common.save": "저장",
   "common.cancel": "취소",
   "common.delete": "삭제",

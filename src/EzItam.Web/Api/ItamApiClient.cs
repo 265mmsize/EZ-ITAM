@@ -1,8 +1,9 @@
+using EzItam.Web.ViewModels;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace EzItam.Web.Api;
 
@@ -150,4 +151,10 @@ public sealed class ItamApiClient
 
     // ---------- 대시보드 ----------
     public Task<DashboardDto> DashboardAsync() => Send<DashboardDto>(HttpMethod.Get, "api/v1/dashboard");
+
+    public Task<List<AssetLabelViewModel>> ListAssetLabelAsync(string ids)
+    {
+        var fromQuery = Query("api/v1/assets/labels", new { ids });
+        return Send<List<AssetLabelViewModel>>(HttpMethod.Get, fromQuery);
+    }
 }

@@ -1,112 +1,177 @@
 @model AssetIndexViewModel
 @{
-    ViewData["Title"] = L["하드웨어 자산"];
-    var f = Model.Filter ?? new AssetFilter();
-    var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
-    string SortUrl(string col) => Url.Action("Index", new { f.Search, f.CategoryId, f.Status, f.LocationId, f.DepartmentId, f.EmployeeId, f.WarrantyExpiringOnly, f.PageSize, Sort = col, Desc = f.Sort == col && !f.Desc })!;
-    string SortMark(string col) => f.Sort == col ? (f.Desc ? " ▼" : " ▲") : "";
-    string PageUrl(int p) => Url.Action("Index", new { f.Search, f.CategoryId, f.Status, f.LocationId, f.DepartmentId, f.EmployeeId, f.WarrantyExpiringOnly, f.Sort, f.Desc, f.PageSize, Page = p })!;
+	ViewData["Title"] = L["하드웨어 자산"];
+	var f = Model.Filter ?? new AssetFilter();
+	var canEdit = User.IsInRole("Admin") || User.IsInRole("Manager");
+	string SortUrl(string col) => Url.Action("Index", new { f.Search, f.CategoryId, f.Status, f.LocationId, f.DepartmentId, f.EmployeeId, f.WarrantyExpiringOnly, f.PageSize, Sort = col, Desc = f.Sort == col && !f.Desc })!;
+	string SortMark(string col) => f.Sort == col ? (f.Desc ? " ▼" : " ▲") : "";
+	string PageUrl(int p) => Url.Action("Index", new { f.Search, f.CategoryId, f.Status, f.LocationId, f.DepartmentId, f.EmployeeId, f.WarrantyExpiringOnly, f.Sort, f.Desc, f.PageSize, Page = p })!;
 }
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <h1 class="h4 mb-0">@L["assets.title"] <span class="text-muted fs-6">@L["assets.count", Model.Result.TotalCount.ToString("#,##0")]</span></h1>
-    <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-all-route-data="@(new Dictionary<string,string?>{{"search",f.Search},{"categoryId",f.CategoryId?.ToString()},{"status",f.Status?.ToString()},{"locationId",f.LocationId?.ToString()},{"departmentId",f.DepartmentId?.ToString()},{"employeeId",f.EmployeeId?.ToString()},{"warrantyExpiringOnly",f.WarrantyExpiringOnly.ToString()},{"sort",f.Sort},{"desc",f.Desc.ToString()}})">@L["assets.export"]</a>
-        @if (canEdit) { <a class="btn btn-primary btn-sm" asp-action="Create">@L["assets.new"]</a> }
-    </div>
+	<h1 class="h4 mb-0">@L["assets.title"] <span class="text-muted fs-6">@L["assets.count", Model.Result.TotalCount.ToString("#,##0")]</span></h1>
+	<div class="d-flex gap-2">
+		@if (canEdit)
+		{
+			<a class="btn btn-primary btn-sm" asp-action="Create">@L["assets.new"]</a>
+		}
+		<button type="button" class="btn btn-success btn-sm" id="btn-print-label">
+			<i class="bi bi-printer"></i> @L["assets.print_label"]
+		</button>
+		<a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-all-route-data="@(new Dictionary<string, string?> { { "search", f.Search }, { "categoryId", f.CategoryId?.ToString() }, { "status", f.Status?.ToString() }, { "locationId", f.LocationId?.ToString() }, { "departmentId", f.DepartmentId?.ToString() }, { "employeeId", f.EmployeeId?.ToString() }, { "warrantyExpiringOnly", f.WarrantyExpiringOnly.ToString() }, { "sort", f.Sort }, { "desc", f.Desc.ToString() } })">@L["assets.export"]</a>
+	</div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-body py-2">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-3 col-lg">
-                <label class="form-label small mb-0">@L["assets.search"]</label>
-                <input name="search" value="@f.Search" class="form-control form-control-sm" placeholder="@L["assets.search_placeholder"]" />
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small mb-0">@L["assets.category"]</label>
-                <select name="categoryId" class="form-select form-select-sm" asp-items="ViewBag.Categories"><option value="">@L["assets.all"]</option></select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small mb-0">@L["assets.status"]</label>
-                <select name="status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">@L["assets.all"]</option></select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small mb-0">@L["assets.location"]</label>
-                <select name="locationId" class="form-select form-select-sm" asp-items="ViewBag.Locations"><option value="">@L["assets.all"]</option></select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small mb-0">@L["assets.department"]</label>
-                <select name="departmentId" class="form-select form-select-sm" asp-items="ViewBag.Departments"><option value="">@L["assets.all"]</option></select>
-            </div>
-            <div class="col-md-auto d-flex gap-1 text-nowrap">
-                <button class="btn btn-sm btn-primary">@L["assets.go"]</button>
-                <a class="btn btn-sm btn-outline-secondary" asp-action="Index">@L["assets.reset"]</a>
-            </div>
-            <div class="col-12">
-                <div class="form-check form-check-inline">
-                    <input type="checkbox" class="form-check-input" id="warrantyExpiringOnly" name="warrantyExpiringOnly" value="true" @(f.WarrantyExpiringOnly ? "checked" : "") />
-                    <label class="form-check-label small" for="warrantyExpiringOnly">@L["assets.warranty_only"]</label>
-                </div>
-                <input type="hidden" name="sort" value="@f.Sort" /><input type="hidden" name="desc" value="@f.Desc.ToString().ToLower()" />
-            </div>
-        </form>
-    </div>
+	<div class="card-body py-2">
+		<form method="get" class="row g-2 align-items-end">
+			<div class="col-md-3 col-lg">
+				<label class="form-label small mb-0">@L["assets.search"]</label>
+				<input name="search" value="@f.Search" class="form-control form-control-sm" placeholder="@L["assets.search_placeholder"]" />
+			</div>
+			<div class="col-md-2">
+				<label class="form-label small mb-0">@L["assets.category"]</label>
+				<select name="categoryId" class="form-select form-select-sm" asp-items="ViewBag.Categories"><option value="">@L["assets.all"]</option></select>
+			</div>
+			<div class="col-md-2">
+				<label class="form-label small mb-0">@L["assets.status"]</label>
+				<select name="status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">@L["assets.all"]</option></select>
+			</div>
+			<div class="col-md-2">
+				<label class="form-label small mb-0">@L["assets.location"]</label>
+				<select name="locationId" class="form-select form-select-sm" asp-items="ViewBag.Locations"><option value="">@L["assets.all"]</option></select>
+			</div>
+			<div class="col-md-2">
+				<label class="form-label small mb-0">@L["assets.department"]</label>
+				<select name="departmentId" class="form-select form-select-sm" asp-items="ViewBag.Departments"><option value="">@L["assets.all"]</option></select>
+			</div>
+			<div class="col-md-auto d-flex gap-1 text-nowrap">
+				<button class="btn btn-sm btn-primary">@L["assets.go"]</button>
+				<a class="btn btn-sm btn-outline-secondary" asp-action="Index">@L["assets.reset"]</a>
+			</div>
+			<div class="col-12">
+				<div class="form-check form-check-inline">
+					<input type="checkbox" class="form-check-input" id="warrantyExpiringOnly" name="warrantyExpiringOnly" value="true" @(f.WarrantyExpiringOnly ? "checked" : "") />
+					<label class="form-check-label small" for="warrantyExpiringOnly">@L["assets.warranty_only"]</label>
+				</div>
+				<input type="hidden" name="sort" value="@f.Sort" /><input type="hidden" name="desc" value="@f.Desc.ToString().ToLower()" />
+			</div>
+		</form>
+	</div>
 </div>
 
 <div class="card">
-    <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th><a href="@SortUrl("tag")">@L["assets.col.tag"]@(SortMark("tag"))</a></th>
-                    <th><a href="@SortUrl("name")">@L["assets.col.name"]@(SortMark("name"))</a></th>
-                    <th><a href="@SortUrl("category")">@L["assets.col.category"]@(SortMark("category"))</a></th>
-                    <th><a href="@SortUrl("status")">@L["assets.col.status"]@(SortMark("status"))</a></th>
-                    <th>@L["assets.col.model"]</th>
-                    <th>@L["assets.col.user"]</th>
-                    <th>@L["assets.col.location"]</th>
-                    <th><a href="@SortUrl("purchase")">@L["assets.col.purchase"]@(SortMark("purchase"))</a></th>
-                    <th><a href="@SortUrl("warranty")">@L["assets.col.warranty"]@(SortMark("warranty"))</a></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var a in Model.Result.Items)
-            {
-                <tr>
-                    <td class="w-1"><a asp-action="Details" asp-route-id="@a.Id"><strong>@a.AssetTag</strong></a></td>
-                    <td>@a.Name</td>
-                    <td>@a.Category?.Name</td>
-                    <td>@a.Status.StatusBadge()</td>
-                    <td class="small">@a.Model<br /><span class="text-muted">@a.SerialNumber</span></td>
-                    <td>
-                        @if (a.CurrentEmployee is not null)
-                        {
-                            <a asp-controller="Employees" asp-action="Details" asp-route-id="@a.CurrentEmployeeId">@a.CurrentEmployee.Name</a>
-                            <div class="small text-muted">@a.CurrentEmployee.Department?.Name</div>
-                        }
-                        else { <span class="text-muted">-</span> }
-                    </td>
-                    <td>@(a.Location?.Name ?? "-")</td>
-                    <td>@a.PurchaseDate.Ymd()</td>
-                    <td class="@(a.IsWarrantyExpired ? "text-danger" : a.IsWarrantyExpiringSoon ? "text-warning fw-bold" : "")">@a.WarrantyExpiry.Ymd()</td>
-                </tr>
-            }
-            @if (Model.Result.Items.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">@L["assets.empty"]</td></tr> }
-            </tbody>
-        </table>
-    </div>
-    @if (Model.Result.TotalPages > 1)
-    {
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="small text-muted">@L["{0} / {1} 페이지", Model.Result.Page, Model.Result.TotalPages]</span>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item @(Model.Result.HasPrevious ? "" : "disabled")"><a class="page-link" href="@PageUrl(Model.Result.Page - 1)">@L["이전"]</a></li>
-                @for (var p = Math.Max(1, Model.Result.Page - 3); p <= Math.Min(Model.Result.TotalPages, Model.Result.Page + 3); p++)
-                {
-                    <li class="page-item @(p == Model.Result.Page ? "active" : "")"><a class="page-link" href="@PageUrl(p)">@p</a></li>
-                }
-                <li class="page-item @(Model.Result.HasNext ? "" : "disabled")"><a class="page-link" href="@PageUrl(Model.Result.Page + 1)">@L["다음"]</a></li>
-            </ul>
-        </div>
-    }
+	<div class="table-responsive">
+		<table class="table table-sm table-hover mb-0">
+			<thead class="table-light">
+				<tr>
+					<th class="w-1 text-center">
+						<input type="checkbox" class="form-check-input" id="select-all" />
+					</th>
+					<th><a href="@SortUrl("tag")">@L["assets.col.tag"]@(SortMark("tag"))</a></th>
+					<th><a href="@SortUrl("name")">@L["assets.col.name"]@(SortMark("name"))</a></th>
+					<th><a href="@SortUrl("category")">@L["assets.col.category"]@(SortMark("category"))</a></th>
+					<th><a href="@SortUrl("status")">@L["assets.col.status"]@(SortMark("status"))</a></th>
+					<th>@L["assets.col.model"]</th>
+					<th>@L["assets.col.user"]</th>
+					<th>@L["assets.col.location"]</th>
+					<th><a href="@SortUrl("purchase")">@L["assets.col.purchase"]@(SortMark("purchase"))</a></th>
+					<th><a href="@SortUrl("warranty")">@L["assets.col.warranty"]@(SortMark("warranty"))</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var a in Model.Result.Items)
+				{
+					<tr>
+						<td class="w-1 text-center">
+							<input type="checkbox" class="form-check-input asset-checkbox" value="@a.Id" />
+						</td>
+						<td class="w-1"><a asp-action="Details" asp-route-id="@a.Id"><strong>@a.AssetTag</strong></a></td>
+						<td>@a.Name</td>
+						<td>@a.Category?.Name</td>
+						<td>@a.Status.StatusBadge()</td>
+						<td class="small">@a.Model<br /><span class="text-muted">@a.SerialNumber</span></td>
+						<td>
+							@if (a.CurrentEmployee is not null)
+							{
+								<a asp-controller="Employees" asp-action="Details" asp-route-id="@a.CurrentEmployeeId">@a.CurrentEmployee.Name</a>
+								<div class="small text-muted">@a.CurrentEmployee.Department?.Name</div>
+							}
+							else
+							{
+
+								<span class="text-muted">-</span>
+							}
+						</td>
+						<td>@(a.Location?.Name ?? "-")</td>
+						<td>@a.PurchaseDate.Ymd()</td>
+						<td class="@(a.IsWarrantyExpired ? "text-danger" : a.IsWarrantyExpiringSoon ? "text-warning fw-bold" : "")">@a.WarrantyExpiry.Ymd()</td>
+					</tr>
+				}
+				@if (Model.Result.Items.Count == 0)
+				{
+					<tr><td colspan="9" class="text-center text-muted py-4">@L["assets.empty"]</td></tr>
+				}
+			</tbody>
+		</table>
+	</div>
+	@if (Model.Result.TotalPages > 1)
+	{
+		<div class="card-footer d-flex justify-content-between align-items-center">
+			<span class="small text-muted">@L["{0} / {1} 페이지", Model.Result.Page, Model.Result.TotalPages]</span>
+			<ul class="pagination pagination-sm mb-0">
+				<li class="page-item @(Model.Result.HasPrevious ? "" : "disabled")"><a class="page-link" href="@PageUrl(Model.Result.Page - 1)">@L["이전"]</a></li>
+				@for (var p = Math.Max(1, Model.Result.Page - 3); p <= Math.Min(Model.Result.TotalPages, Model.Result.Page + 3); p++)
+				{
+					<li class="page-item @(p == Model.Result.Page ? "active" : "")"><a class="page-link" href="@PageUrl(p)">@p</a></li>
+				}
+				<li class="page-item @(Model.Result.HasNext ? "" : "disabled")"><a class="page-link" href="@PageUrl(Model.Result.Page + 1)">@L["다음"]</a></li>
+			</ul>
+		</div>
+	}
 </div>
+
+@section Scripts {
+	<script type="text/javascript">
+		document.addEventListener("DOMContentLoaded", function () {
+			const selectAllCheckbox = document.getElementById("select-all");
+			const assetCheckboxes = document.querySelectorAll(".asset-checkbox");
+			const btnPrintLabel = document.getElementById("btn-print-label");
+
+			if (selectAllCheckbox) {
+				selectAllCheckbox.addEventListener("change", function () {
+					assetCheckboxes.forEach(cb => cb.checked = this.checked);
+				});
+			}
+
+			assetCheckboxes.forEach(cb => {
+				cb.addEventListener("change", function () {
+					const allChecked = Array.from(assetCheckboxes).every(item => item.checked);
+					const anyChecked = Array.from(assetCheckboxes).some(item => item.checked);
+					if (selectAllCheckbox) {
+						selectAllCheckbox.checked = allChecked;
+						selectAllCheckbox.indeterminate = anyChecked && !allChecked;
+					}
+				});
+			});
+
+			if (btnPrintLabel) {
+				btnPrintLabel.addEventListener("click", function () {
+					const selectedIds = Array.from(assetCheckboxes)
+						.filter(cb => cb.checked)
+						.map(cb => cb.value);
+
+					if (selectedIds.length === 0) {
+						alert("@L["assets.select_at_least_one"]");
+						return;
+					}
+
+					const idsString = selectedIds.join(",");
+					const base64Ids = btoa(idsString);
+					const url = `@Url.Action("PrintLabels", "Assets")?ids=` + encodeURIComponent(base64Ids);
+					window.open(url, "_blank","popup");
+				});
+			}
+
+		});
+	</script>
+}

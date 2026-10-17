@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace EzItam.Contracts;
 
 // 화면과 API가 공유하는 데이터 모양입니다. 엔티티의 속성 이름을 그대로 따르므로
@@ -120,6 +123,7 @@ public class MaintenanceDto
     public MaintenanceType Type { get; set; }
     public DateTime Date { get; set; } = DateTime.Today;
     public string Description { get; set; } = string.Empty;
+    [DisplayFormat(DataFormatString = "{0:0}", ApplyFormatInEditMode = true)]
     public decimal? Cost { get; set; }
     public int? VendorId { get; set; }
     public VendorRef? Vendor { get; set; }
@@ -157,6 +161,7 @@ public class SoftwareLicenseDto
     public DateTime? ExpiryDate { get; set; }
     public int? VendorId { get; set; }
     public VendorRef? Vendor { get; set; }
+    [DisplayFormat(DataFormatString = "{0:0}", ApplyFormatInEditMode = true)]
     public decimal? Cost { get; set; }
     public string? Notes { get; set; }
     public int UsedSeats { get; set; }
@@ -361,4 +366,18 @@ public sealed class AgentRingRequest
 public sealed class AgentLinkRequest
 {
     public int? AssetId { get; set; }
+}
+
+public class AssetLabelsDto
+{
+    [JsonPropertyName("asset_id")]
+    public int AssetId { get; set; }
+    [JsonPropertyName("asset_tag")]
+    public string AssetTag { get; set; } = string.Empty;
+    [JsonPropertyName("asset_name")]
+    public string AssetName { get; set; } = string.Empty;
+    [JsonPropertyName("serial_number")]
+    public string? SerialNumber { get; set; }
+    [JsonPropertyName("ip_address")]
+    public string? IpAddress { get; set; }
 }
