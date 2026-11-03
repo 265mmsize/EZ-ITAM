@@ -126,7 +126,7 @@ namespace EzItam.Web.Controllers
             var detailByTag = await Api.GetAssetByInventoryIdAndTag(inventoryId, tag);
             if (detailByTag is null || detailByTag.Id == 0)
             {
-                return Ok(new { success = false, message = L["inv.scan.invalid"] });
+                return Ok(new { success = false, message = L["inv.scan.invalid"].Value });
             }
             return Ok(new { success = true, item = detailByTag });
         }
