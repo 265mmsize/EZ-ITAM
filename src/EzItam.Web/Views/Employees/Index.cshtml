@@ -30,15 +30,6 @@
 </table></div>
 
 
-@section Scripts{
-    <script>
-        $(document).ready(function () {
-            $('#employeesTable').DataTable({
-                "initComplete": function (settings, json) {
-                    // Sau khi DataTable đã khởi tạo xong, đổi lại visibility thành visible
-                    $('#employeesTable').css('visibility', 'visible');
-                }
-                });
-            });
-    </script>
+@section Scripts {
+	<script src="~/js/views/employees.index.js" asp-append-version="true"></script>
 }

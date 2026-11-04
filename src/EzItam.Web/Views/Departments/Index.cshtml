@@ -27,14 +27,5 @@
 
 
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            $('#departmentsTable').DataTable({
-                "initComplete": function (settings, json) {
-                    // Sau khi DataTable đã khởi tạo xong, đổi lại visibility thành visible
-                    $('#departmentsTable').css('visibility', 'visible');
-                }
-            });
-        });
-    </script>
+	<script src="~/js/views/departments.index.js" asp-append-version="true"></script>
 }

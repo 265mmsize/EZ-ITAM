@@ -9,7 +9,6 @@
 	<link rel="stylesheet" href="~/lib/datatables/css/datatables.min.css" asp-append-version="true" />
 	<link rel="stylesheet" href="~/lib/select2/select2.min.css" asp-append-version="true" />
 	<link rel="stylesheet" href="~/lib/select2/select2-bootstrap-5-theme.min.css" asp-append-version="true" />
-	
 </head>
 <body data-busy-text="@L["처리 중..."].Value">
 	@{
@@ -21,8 +20,33 @@
 	}
 	@if (isAuthenticated)
 	{
+		<!-- 1. Thanh Header Mobile xuất hiện trên màn hình nhỏ -->
+		<div class="mobile-header">
+			<div class="d-flex align-items-center">
+				<span class="brand-mark fw-bold text-primary bg-white px-2 py-1 rounded me-2">EZ</span>
+				<span class="brand-text fw-bold">ITAM</span>
+			</div>
+			<button class="btn btn-outline-light btn-sm" id="sidebarToggle" type="button">
+				☰
+			</button>
+		</div>
+
+		<!-- 2. Lớp nền mờ khi mở menu -->
+		<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+
 		<div class="app-shell">
-			<nav class="sidebar d-flex flex-column">
+			<nav class="sidebar d-flex flex-column" id="appSidebar">
+
+				<!-- Nút đóng menu (X) ở góc trên sidebar trên mobile -->
+				<div class="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary d-lg-none">
+					<a class="brand text-decoration-none text-white m-0" asp-controller="Home" asp-action="Index">
+						<span class="brand-mark">EZ</span><span class="brand-text">ITAM</span>
+					</a>
+					<button class="btn-close btn-close-white sidebar-close-btn" id="sidebarClose" type="button" aria-label="Close"></button>
+				</div>
+
+
 				<a class="brand" asp-controller="Home" asp-action="Index">
 					<span class="brand-mark">EZ</span><span class="brand-text">ITAM</span>
 				</a>
@@ -84,6 +108,25 @@
 	<script src="~/js/site.js" asp-append-version="true"></script>
 	<script src="~/lib/datatables/js/datatables.min.js" asp-append-version="true"></script>
 	<script src="~/lib/select2/select2.min.js" asp-append-version="true"></script>
+	<script type="text/javascript">
+		document.addEventListener("DOMContentLoaded", function () {
+			const sidebar = document.getElementById("appSidebar");
+			const sidebarToggle = document.getElementById("sidebarToggle");
+			const sidebarClose = document.getElementById("sidebarClose");
+			const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+
+			function toggleMenu() {
+				if (sidebar && sidebarBackdrop) {
+					sidebar.classList.toggle("show");
+					sidebarBackdrop.classList.toggle("show");
+				}
+			}
+
+			if (sidebarToggle) sidebarToggle.addEventListener("click", toggleMenu);
+			if (sidebarClose) sidebarClose.addEventListener("click", toggleMenu);
+			if (sidebarBackdrop) sidebarBackdrop.addEventListener("click", toggleMenu);
+		});
+	</script>
 	@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

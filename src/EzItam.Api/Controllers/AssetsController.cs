@@ -120,4 +120,34 @@ public class AssetsController : ApiControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpGet("bytag")]
+    [Authorize(Policy = "CanEdit")]
+    public async Task<IActionResult> GetAssetByTag([FromQuery] string tag, CancellationToken ct)
+    {
+        try
+        {
+            var asset = await _assets.GetAssetByTagAsync(tag, ct);
+            return Ok(asset);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("transfer")]
+    [Authorize(Policy = "CanEdit")]
+    public async Task<IActionResult> TransferAsset([FromBody] TransferAssetRequest req, CancellationToken ct)
+    {
+        try
+        {
+            await _assets.TransferAssetAsync(req, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
 }

@@ -177,4 +177,8 @@ public sealed class ItamApiClient
 
     public async Task<List<HrEmployeeDto>> GetListEmployeesByOrgCode(string orgCode) => await Send<List<HrEmployeeDto>>(HttpMethod.Get, $"api/v1/external/hr/employees?orgCode={orgCode}");
 
+    public async Task<AssetDto?> GetAssetByTagAsync(string tag) => await Send<AssetDto?>(HttpMethod.Get, $"api/v1/assets/bytag?tag={tag}");
+
+    public async Task TransferAssetAsync(TransferAssetRequest req) => await SendNoContent(HttpMethod.Post, "api/v1/assets/transfer", req);
+
 }

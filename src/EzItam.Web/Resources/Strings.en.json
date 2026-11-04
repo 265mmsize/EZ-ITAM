@@ -549,5 +549,18 @@
   "inv.scan.scansuccessfully": "Asset found successfully",
   "inv.scan.alreadyscan": "Asset has been inventoried.",
   "inv.scan.invalid": "Asset tag is invalid.",
-  "inv.scan.savesuccessfully": "Save result successfully."
+  "inv.scan.savesuccessfully": "Save result successfully.",
+
+  "assets.mobile.assettag": "Asset tag",
+  "assets.mobile.assetname": "Asset name",
+  "assets.mobile.employee": "Employee",
+  "assets.mobile.newstatus": "New status",
+  "assets.mobile.newlocation": "New location",
+  "assets.mobile.newemployee": "New employee",
+  "assets.mobile.note": "Note",
+  "assets.mobile.btnsave": "Save",
+  "assets.mobile.transfersuccessfully": "Transfer successfully."
+
+
+
 }

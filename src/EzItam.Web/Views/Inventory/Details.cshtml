@@ -34,7 +34,8 @@
             <i class="bi bi-file-earmark-excel"></i> @L["inv.btn.scan"]
         </a>
 
-        <a class="btn btn-info btn-sm @(unscannedAssets > 0 ? "disabled" : "")" id="btnPostDiff" asp-action="PostDiff" asp-route-id="@Model.Id">
+        <a class="btn btn-info btn-sm @(unscannedAssets > 0 ? "disabled" : "")" id="btnPostDiff" asp-action="PostDiff" asp-route-id="@Model.Id"
+            data-confirm-message="@L["invdetail.postdiffmessage"]">
             <i class="bi bi-file-earmark-excel"></i> @L["inv.btn.postdiff"]
         </a>
     </div>
@@ -236,42 +237,5 @@
 </div>
 
 @section Scripts {
-    <script>
-
-        $(document).ready(function () {
-            $('#inventoryTable').DataTable({
-            });
-
-            $('#changedItemsTable').DataTable({
-            });
-        });
-
-
-        document.addEventListener("DOMContentLoaded", function () {
-            const btnPostDiff = document.getElementById("btnPostDiff");
-
-            if (btnPostDiff) {
-                btnPostDiff.addEventListener("click", function (e) {
-                    // 1. Nếu nút đang bị disabled thì chặn lại
-                    if (this.classList.contains("disabled") || this.getAttribute("aria-disabled") === "true") {
-                        e.preventDefault();
-                        return;
-                    }
-
-                    // 2. Chặn hành vi chuyển hướng mặc định của thẻ <a>
-                    e.preventDefault();
-                    const targetUrl = this.href; // Lấy URL tự động sinh bởi asp-action
-
-                    // 3. Hiển thị hộp thoại xác nhận mặc định của trình duyệt
-                    const isConfirmed = confirm(@Json.Serialize(L["invdetail.postdiffmessage"].Value));
-
-                    // 4. Nếu người dùng chọn OK, trình duyệt sẽ tự động gọi đến Controller thông qua URL
-                    if (isConfirmed) {
-                        window.location.href = targetUrl;
-                    }
-                });
-            }
-        });
-
-    </script>
+	<script src="~/js/views/inventory.details.js" asp-append-version="true"></script>
 }

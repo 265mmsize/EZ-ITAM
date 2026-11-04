@@ -500,3 +500,12 @@ public class HrEmployeeDto
     public string? PositionName { get; set; }
     public string? IsResigned { get; set; }
 }
+
+public class TransferAssetRequest
+{
+    public int AssetId { get; set; }
+    public int? NewEmployeeId { get; set; }
+    public int? NewLocationId { get; set; }
+    public int NewStatus { get; set; }
+    public string Notes { get; set; } = string.Empty;
+}

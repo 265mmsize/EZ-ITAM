@@ -548,7 +548,17 @@
   "inv.scan.scansuccessfully": "Tìm thấy thiết bị thành công.",
   "inv.scan.alreadyscan": "Thiết bị đã được kiểm kê.",
   "inv.scan.invalid": "Mã tag không hợp lệ.",
-  "inv.scan.savesuccessfully": "Lưu kết quả thành công."
+  "inv.scan.savesuccessfully": "Lưu kết quả thành công.",
+
+  "assets.mobile.assettag": "Mã thiết bị",
+  "assets.mobile.assetname": "Tên thiết bị",
+  "assets.mobile.employee": "Nhân viên",
+  "assets.mobile.newstatus": "Trạng thái mới",
+  "assets.mobile.newlocation": "Vị trí mới",
+  "assets.mobile.newemployee": "Nhân viên mới",
+  "assets.mobile.note": "Ghi chú",
+  "assets.mobile.btnsave": "Xác nhận",
+  "assets.mobile.transfersuccessfully": "Chuyển giao thiết bị thành công."
 
 
 }

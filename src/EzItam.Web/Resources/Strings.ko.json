@@ -137,6 +137,16 @@
   "inv.scan.scansuccessfully": "장치를 성공적으로 찾았습니다.",
   "inv.scan.alreadyscan": "장비 목록 작성이 완료되었습니다.",
   "inv.scan.invalid": "잘못된 태그 코드입니다.",
-  "inv.scan.savesuccessfully": "성공적인 결과를 저장하세요."
+  "inv.scan.savesuccessfully": "성공적인 결과를 저장하세요.",
+
+  "assets.mobile.assettag": "장치 코드",
+  "assets.mobile.assetname": "장치 이름",
+  "assets.mobile.employee": "직원",
+  "assets.mobile.newstatus": "새 상태",
+  "assets.mobile.newlocation": "새 위치",
+  "assets.mobile.newemployee": "새 직원",
+  "assets.mobile.note": "메모",
+  "assets.mobile.btnsave": "확인",
+  "assets.mobile.transfersuccessfully": "장치가 성공적으로 전송되었습니다."
 
 }

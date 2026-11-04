@@ -18,6 +18,9 @@ public interface IAssetService
     Task ChangeStatusAsync(int assetId, AssetStatus newStatus, string? notes, CancellationToken ct = default);
     Task<string> GenerateAssetTagAsync(int categoryId, CancellationToken ct = default);
     Task<List<AssetLabelsDto>> GetListAssetLabelsByIdsAsync(List<int> assetIds, CancellationToken ct = default);
+    Task<AssetDto?> GetAssetByTagAsync(string tag, CancellationToken ct = default);
+
+    Task TransferAssetAsync(TransferAssetRequest req, CancellationToken ct = default);
 }
 
 public class AssetService : IAssetService
@@ -287,5 +290,27 @@ public class AssetService : IAssetService
                 IpAddress = a.IpAddress
             });
         return await query.ToListAsync(ct);
+    }
+
+    public async Task<AssetDto?> GetAssetByTagAsync(string tag, CancellationToken ct = default)
+    {
+        var asset = await _db.Assets
+            .Include(a => a.Category)
+            .Include(a => a.Location)
+            .Include(a => a.CurrentEmployee).ThenInclude(e => e!.Department)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.AssetTag == tag, ct);
+        return asset is null ? new AssetDto() : Map.ToDto(asset, detail: true);
+    }
+
+    public async Task TransferAssetAsync(TransferAssetRequest req, CancellationToken ct = default)
+    {
+        var asset = await _db.Assets.FirstOrDefaultAsync(a => a.Id == req.AssetId, cancellationToken: ct)
+            ?? throw new DomainException("자산을 찾을 수 없습니다.");
+        asset.CurrentEmployeeId = req.NewEmployeeId;
+        asset.LocationId = req.NewLocationId;
+        asset.Status = (AssetStatus)req.NewStatus;
+        asset.Notes = req.Notes;
+        await _db.SaveChangesAsync(ct);
     }
 }

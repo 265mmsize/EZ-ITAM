@@ -14,7 +14,7 @@
 		{
 			<a class="btn btn-primary btn-sm" asp-action="Create">@L["assets.new"]</a>
 		}
-		<button type="button" class="btn btn-success btn-sm" id="btn-print-label">
+		<button type="button" class="btn btn-success btn-sm" id="btn-print-label" data-alert-message="@L["assets.select_at_least_one"]" data-print-url="@Url.Action("PrintLabels", "Assets")">
 			<i class="bi bi-printer"></i> @L["assets.print_label"]
 		</button>
 		<a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-all-route-data="@(new Dictionary<string, string?> { { "search", f.Search }, { "categoryId", f.CategoryId?.ToString() }, { "status", f.Status?.ToString() }, { "locationId", f.LocationId?.ToString() }, { "departmentId", f.DepartmentId?.ToString() }, { "employeeId", f.EmployeeId?.ToString() }, { "warrantyExpiringOnly", f.WarrantyExpiringOnly.ToString() }, { "sort", f.Sort }, { "desc", f.Desc.ToString() } })">@L["assets.export"]</a>
@@ -131,47 +131,5 @@
 </div>
 
 @section Scripts {
-	<script type="text/javascript">
-		document.addEventListener("DOMContentLoaded", function () {
-			const selectAllCheckbox = document.getElementById("select-all");
-			const assetCheckboxes = document.querySelectorAll(".asset-checkbox");
-			const btnPrintLabel = document.getElementById("btn-print-label");
-
-			if (selectAllCheckbox) {
-				selectAllCheckbox.addEventListener("change", function () {
-					assetCheckboxes.forEach(cb => cb.checked = this.checked);
-				});
-			}
-
-			assetCheckboxes.forEach(cb => {
-				cb.addEventListener("change", function () {
-					const allChecked = Array.from(assetCheckboxes).every(item => item.checked);
-					const anyChecked = Array.from(assetCheckboxes).some(item => item.checked);
-					if (selectAllCheckbox) {
-						selectAllCheckbox.checked = allChecked;
-						selectAllCheckbox.indeterminate = anyChecked && !allChecked;
-					}
-				});
-			});
-
-			if (btnPrintLabel) {
-				btnPrintLabel.addEventListener("click", function () {
-					const selectedIds = Array.from(assetCheckboxes)
-						.filter(cb => cb.checked)
-						.map(cb => cb.value);
-
-					if (selectedIds.length === 0) {
-						alert("@L["assets.select_at_least_one"]");
-						return;
-					}
-
-					const idsString = selectedIds.join(",");
-					const base64Ids = btoa(idsString);
-					const url = `@Url.Action("PrintLabels", "Assets")?ids=` + encodeURIComponent(base64Ids);
-					window.open(url, "_blank","popup");
-				});
-			}
-
-		});
-	</script>
+	<script src="~/js/views/assets.index.js" asp-append-version="true"></script>
 }

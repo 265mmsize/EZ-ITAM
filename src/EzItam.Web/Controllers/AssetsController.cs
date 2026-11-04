@@ -219,6 +219,39 @@ public class AssetsController(ItamApiClient api, IStringLocalizer<SharedResource
         return View(nameof(PrintLabels), res);
     }
 
+    public async Task<IActionResult> Mobile()
+    {
+        SetViewBagStatus();
+        ViewBag.LocationList = await OptionsAsync("locations");
+        ViewBag.EmployeeList = await OptionsAsync("employees");
+        return View();
+    }
+
+    public async Task<IActionResult> GetAssetByTag(string tag)
+    {
+        var asset = await Api.GetAssetByTagAsync(tag);
+        if (asset is null || asset.Id == 0)
+        {
+            return Ok(new { success = false, message = L["assets.scan.notfound"].Value });
+        }
+        return Ok(new { success = true, item = asset });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> TransferAsset(TransferAssetRequest request)
+    {
+        try
+        {
+            await Api.TransferAssetAsync(request);
+            return Ok(new { success = true});
+        }
+        catch (Exception ex)
+        {
+            return Ok(new { success = false, message = ex.Message });
+        }
+    }
+
+
 
     private static List<SelectListItem> CheckInStatuses()
         => [.. EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString())];
@@ -229,5 +262,20 @@ public class AssetsController(ItamApiClient api, IStringLocalizer<SharedResource
         ViewBag.Locations = await OptionsAsync("locations", asset.LocationId?.ToString());
         ViewBag.Vendors = await OptionsAsync("vendors", asset.VendorId?.ToString());
         ViewBag.Employees = await OptionsAsync("employees", asset.CurrentEmployeeId?.ToString());
+    }
+
+    public void SetViewBagStatus(string? selectedValue = null)
+    {
+        var selectList = Enum.GetValues(typeof(AssetStatus))
+            .Cast<AssetStatus>()
+            .Select(status => new SelectListItem
+            {
+                Value = ((int)status).ToString(),
+                Text = status.ToString(),
+                Selected = selectedValue != null && ((int)status).ToString() == selectedValue
+            })
+            .ToList();
+
+        ViewBag.StatusList = selectList;
     }
 }

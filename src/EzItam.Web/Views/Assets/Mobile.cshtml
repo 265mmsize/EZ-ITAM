@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Quét & Chuyển giao thiết bị";
+}
+
+<div class="container py-3">
+    <h5 class="mb-3 text-center fw-bold">📱 Quét & Chuyển giao thiết bị</h5>
+
+    <!-- KHU VỰC CAMERA QUÉT QR -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body p-2">
+            <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
+            <div class="text-center mt-2">
+                <button id="btnStartScan" class="btn btn-primary btn-sm">📷 Bật Camera quét</button>
+                <button id="btnStopScan" class="btn btn-secondary btn-sm d-none">🛑 Tắt Camera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ô NHẬP MÃ THỦ CÔNG (DỰ PHÒNG KHI KHÔNG QUÉT ĐƯỢC) -->
+    <div class="input-group mb-3">
+        <input type="text" id="assetTagInput" class="form-control" placeholder="Hoặc nhập mã Asset Tag...">
+        <button class="btn btn-outline-primary" type="button" id="btnSearchTag">Tìm</button>
+    </div>
+
+    <!-- KHU VỰC HIỂN THỊ THÔNG TIN VÀ CHUYỂN GIAO -->
+    <div class="card shadow-sm border-0 d-none" id="deviceInfoCard">
+        <div class="card-header bg-success text-white py-2">
+            <strong>Thông tin thiết bị</strong>
+        </div>
+        <div class="card-body">
+            <form id="transferForm">
+                <input type="hidden" id="AssetId" />
+
+                <!-- Thông tin cũ -->
+                <div class="bg-light p-2 rounded mb-3 small">
+                    <div><strong>@L["assets.mobile.assettag"]:</strong> <span id="lblAssetTag">-</span></div>
+                    <div><strong>@L["assets.mobile.assetname"]:</strong> <span id="lblAssetName">-</span></div>
+                    <div><strong>@L["assets.category"]:</strong> <span id="lblAssetCategory">-</span></div>
+                    
+                    <div><strong>@L["assets.status"]:</strong> <span id="lblOldStatus">-</span></div>
+                    <div><strong>@L["assets.mobile.employee"]:</strong> <span id="lblOldEmployee">-</span></div>
+                    <div><strong>@L["assets.location"]:</strong> <span id="lblOldLocation">-</span></div>
+                </div>
+
+                <!-- Form chọn người nhận mới -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">@L["assets.mobile.newstatus"]:</label>
+                    <select id="NewStatus" class="form-select form-select-sm" asp-items="ViewBag.StatusList">
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">@L["assets.mobile.newemployee"]:</label>
+                    <select id="NewEmployeeId" class="form-select form-select-sm" asp-items="ViewBag.EmployeeList" 
+                        data-placeholder="@L["-- 선택 --"]"
+                        data-transfer-success="@L["assets.mobile.transfersuccessfully"]">
+                        <option value="">@L["-- 선택 --"]</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">@L["assets.mobile.newlocation"]:</label>
+                    <select id="NewLocationId" class="form-select form-select-sm" asp-items="ViewBag.LocationList">
+                        <option value="">@L["-- 선택 --"]</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">@L["assets.mobile.note"]:</label>
+                    <textarea id="TransferNotes" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+
+                <div class="d-grid">
+                    <button type="button" id="btnConfirmTransfer" class="btn btn-success">
+                        ✅ @L["assets.mobile.btnsave"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Nhúng thư viện Html5Qrcode từ CDN -->
+@section Scripts {
+	<script src="~/lib/html5-qrcode/html5-qrcode.min.js" asp-append-version="true"></script>
+	<script src="~/js/views/assets.mobile.js" asp-append-version="true"></script>
+}
