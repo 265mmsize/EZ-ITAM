@@ -300,7 +300,7 @@ public class AssetService : IAssetService
             .Include(a => a.CurrentEmployee).ThenInclude(e => e!.Department)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.AssetTag == tag, ct);
-        return asset is null ? new AssetDto() : Map.ToDto(asset, detail: true);
+        return asset is null ? null : Map.ToDto(asset, detail: true);
     }
 
     public async Task TransferAssetAsync(TransferAssetRequest req, CancellationToken ct = default)

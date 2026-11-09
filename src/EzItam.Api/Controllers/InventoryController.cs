@@ -1,10 +1,3 @@
-﻿using Azure.Core;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using SQLitePCL;
-using System.Net;
-
 namespace EzItam.Api.Controllers
 {
 
@@ -15,113 +8,110 @@ namespace EzItam.Api.Controllers
         private readonly IInventoryService _inventoryService = inventoryService;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InventoryDto>>> GetAllInventories()
+        public async Task<ActionResult<IEnumerable<InventoryDto>>> GetAllInventories(CancellationToken ct)
         {
-            var inventories = await _inventoryService.GetAllInventoriesAsync();
+            var inventories = await _inventoryService.GetAllInventoriesAsync(ct);
             return Ok(inventories);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<InventoryDto>> GetInventoryById(int id)
+        public async Task<ActionResult<InventoryDto>> GetInventoryById(int id, CancellationToken ct)
         {
-            var inventory = await _inventoryService.GetInventoryByIdAsync(id);
+            var inventory = await _inventoryService.GetInventoryByIdAsync(id, ct);
             if (inventory is null)
             {
-                return NotFound();
+                return InventoryNotFound();
             }
             return Ok(inventory);
         }
 
         [HttpPost]
         [Authorize(Policy = "CanEdit")]
-        public async Task<ActionResult<int>> CreateInventory(CreateInventoryDto dto)
+        public async Task<ActionResult<InventoryDto>> CreateInventory(CreateInventoryDto dto, CancellationToken ct)
         {
-            var createdInventory = await _inventoryService.CreateInventoryAsync(dto);
-            return Ok(createdInventory);
+            var id = await _inventoryService.CreateInventoryAsync(dto, ct);
+            var inventory = await _inventoryService.GetInventoryByIdAsync(id, ct)
+                ?? throw new InvalidOperationException("The created inventory could not be loaded.");
+            return CreatedAtAction(nameof(GetInventoryById), new { id }, inventory);
         }
 
         [HttpPut("{id:int}")]
         [Authorize(Policy = "CanEdit")]
-        public async Task<ActionResult> UpdateInventory(int id, UpdateInventoryDto dto)
+        public async Task<ActionResult> UpdateInventory(int id, UpdateInventoryDto dto, CancellationToken ct)
         {
-            var updated = await _inventoryService.UpdateInventoryAsync(id, dto);
+            var updated = await _inventoryService.UpdateInventoryAsync(id, dto, ct);
             if (!updated)
             {
-                return NotFound();
+                return InventoryNotFound();
             }
-            return Ok(updated);
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<ActionResult> DeleteInventory(int id)
+        public async Task<ActionResult> DeleteInventory(int id, CancellationToken ct)
         {
-            var deleted = await _inventoryService.DeleteInventoryAsync(id);
+            var deleted = await _inventoryService.DeleteInventoryAsync(id, ct);
             if (!deleted)
             {
-                return NotFound();
+                return InventoryNotFound();
             }
-            return Ok(deleted);
+            return NoContent();
         }
 
         [HttpPut("{id:int}/close")]
         [Authorize(Policy = "CanEdit")]
-        public async Task<ActionResult> CloseInventory(int id)
+        public async Task<ActionResult> CloseInventory(int id, CancellationToken ct)
         {
-            var deleted = await _inventoryService.CloseInventoryAsync(id);
-            if (!deleted)
+            var closed = await _inventoryService.CloseInventoryAsync(id, ct);
+            if (!closed)
             {
-                return NotFound();
+                return InventoryNotFound();
             }
-            return Ok();
+            return NoContent();
         }
 
         [HttpPost("{id:int}/genbook")]
         [Authorize(Policy = "CanEdit")]
-        public async Task<ActionResult<int>> GenInventoryBook(int id)
+        public async Task<IActionResult> GenInventoryBook(int id, CancellationToken ct)
         {
-            var res = await _inventoryService.GenInventoryBookAsync(id);
-            return Ok(res);
+            await _inventoryService.GenInventoryBookAsync(id, ct);
+            return NoContent();
         }
 
         [Authorize(Policy = "CanEdit")]
         [HttpGet("{id:int}/details")]
-        public async Task<ActionResult<InventoryDetailResponseDto?>> GetInventoryDetailByInventoryId(int id)
+        public async Task<ActionResult<InventoryDetailResponseDto>> GetInventoryDetailByInventoryId(int id, CancellationToken ct)
         {
-            var res = await _inventoryService.GetInventoryDetailByInventoryIdAsync(id);
-            return Ok(res);
+            var res = await _inventoryService.GetInventoryDetailByInventoryIdAsync(id, ct);
+            return res is null ? InventoryNotFound() : Ok(res);
         }
 
         [Authorize(Policy = "CanEdit")]
         [HttpGet("{id:int}/asset")]
-        public async Task<ActionResult<InventoryDetailDto?>> GetInventoryDetailByInventoryId([FromQuery] string tag, int id)
+        public async Task<ActionResult<InventoryDetailDto?>> GetInventoryDetailByInventoryId([FromQuery] string tag, int id, CancellationToken ct)
         {
-            var res = await _inventoryService.GetDetailByTag(id, tag);
+            var res = await _inventoryService.GetDetailByTag(id, tag, ct);
             return Ok(res);
         }
 
         [Authorize(Policy = "CanEdit")]
         [HttpPost("scan")]
-        public async Task<ActionResult<bool>> ScanResult([FromBody] ScanResultRequest req)
+        public async Task<ActionResult<bool>> ScanResult([FromBody] ScanResultRequest req, CancellationToken ct)
         {
-            try
-            {
-                var res = await _inventoryService.PostScanResult(req);
-                return Ok(res);
-            }
-            catch (Exception)
-            {
-                return Ok(false);
-            }
-            
+            var res = await _inventoryService.PostScanResult(req, ct);
+            return Ok(res);
         }
 
         [Authorize(Policy = "CanEdit")]
         [HttpPost("postdiff/{id:int}")]
-        public async Task<ActionResult<bool>> PostDiff(int id)
+        public async Task<IActionResult> PostDiff(int id, CancellationToken ct)
         {
-            var res = await _inventoryService.PostDiff(id);
-            return Ok(res);
+            await _inventoryService.PostDiff(id, ct);
+            return NoContent();
         }
+
+        private NotFoundObjectResult InventoryNotFound()
+            => NotFound(new ApiError { Message = "인벤토리를 찾을 수 없습니다." });
     }
 }

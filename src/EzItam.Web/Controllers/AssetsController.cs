@@ -229,12 +229,15 @@ public class AssetsController(ItamApiClient api, IStringLocalizer<SharedResource
 
     public async Task<IActionResult> GetAssetByTag(string tag)
     {
-        var asset = await Api.GetAssetByTagAsync(tag);
-        if (asset is null || asset.Id == 0)
+        try
+        {
+            var asset = await Api.GetAssetByTagAsync(tag);
+            return Ok(new { success = true, item = asset });
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return Ok(new { success = false, message = L["assets.scan.notfound"].Value });
         }
-        return Ok(new { success = true, item = asset });
     }
 
     [HttpPost]

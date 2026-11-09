@@ -33,7 +33,7 @@ namespace EzItam.Web.Controllers
 
             try
             {
-                bool res = await Api.CreateInventoryAsync(model);
+                await Api.CreateInventoryAsync(model);
                 Success(L["inv.create.successfully"]);
                 return RedirectToAction(nameof(Index));
             }
@@ -89,7 +89,7 @@ namespace EzItam.Web.Controllers
         {
             try
             {
-                var res = await Api.GenInventoryBookAsync(id);
+                await Api.GenInventoryBookAsync(id);
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (Exception ex)
@@ -100,8 +100,15 @@ namespace EzItam.Web.Controllers
         }
         public async Task<IActionResult> Details(int id)
         {
-            var inventories = await Api.GetInventoryDetailByInventoryIdAsync(id);
-            return View(inventories);
+            try
+            {
+                var inventories = await Api.GetInventoryDetailByInventoryIdAsync(id);
+                return View(inventories);
+            }
+            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return NotFound();
+            }
         }
 
         [Authorize(Policy = "CanEdit")]

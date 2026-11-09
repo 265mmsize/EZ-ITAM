@@ -8,18 +8,18 @@ namespace EzItam.Api.Services
     public interface IInventoryService
     {
         // --- Quản lý đợt kiểm kê (Inventory Management) ---
-        Task<IEnumerable<InventoryDto>> GetAllInventoriesAsync();
-        Task<InventoryDto?> GetInventoryByIdAsync(int inventoryId);
-        Task<bool> CreateInventoryAsync(CreateInventoryDto dto);
-        Task<bool> UpdateInventoryAsync(int id, UpdateInventoryDto dto);
-        Task<bool> CloseInventoryAsync(int id); // Đóng/Hoàn thành đợt kiểm kê
-        Task<bool> GenInventoryBookAsync(int id);
-        Task<bool> DeleteInventoryAsync(int id);
-        Task<bool> IsAnyNotCloseInvetoryAsync();
-        Task<InventoryDetailResponseDto?> GetInventoryDetailByInventoryIdAsync(int id);
-        Task<InventoryDetailDto?> GetDetailByTag(int inventoryId, string tag);
-        Task<bool> PostScanResult(ScanResultRequest req);
-        Task<bool> PostDiff(int inventoryId);
+        Task<IEnumerable<InventoryDto>> GetAllInventoriesAsync(CancellationToken ct = default);
+        Task<InventoryDto?> GetInventoryByIdAsync(int inventoryId, CancellationToken ct = default);
+        Task<int> CreateInventoryAsync(CreateInventoryDto dto, CancellationToken ct = default);
+        Task<bool> UpdateInventoryAsync(int id, UpdateInventoryDto dto, CancellationToken ct = default);
+        Task<bool> CloseInventoryAsync(int id, CancellationToken ct = default);
+        Task<bool> GenInventoryBookAsync(int id, CancellationToken ct = default);
+        Task<bool> DeleteInventoryAsync(int id, CancellationToken ct = default);
+        Task<bool> IsAnyNotCloseInvetoryAsync(CancellationToken ct = default);
+        Task<InventoryDetailResponseDto?> GetInventoryDetailByInventoryIdAsync(int id, CancellationToken ct = default);
+        Task<InventoryDetailDto?> GetDetailByTag(int inventoryId, string tag, CancellationToken ct = default);
+        Task<bool> PostScanResult(ScanResultRequest req, CancellationToken ct = default);
+        Task<bool> PostDiff(int inventoryId, CancellationToken ct = default);
     }
 
 
@@ -29,27 +29,27 @@ namespace EzItam.Api.Services
         private readonly AppDbContext _context = context;
         private readonly ICurrentUserService _currentUser = currentUser;
 
-        public async Task<bool> IsAnyNotCloseInvetoryAsync()
+        public async Task<bool> IsAnyNotCloseInvetoryAsync(CancellationToken ct = default)
         {
-            return await _context.Inventories.AnyAsync(d => d.InventoryStatus != InventoryStatus.Closed);
+            return await _context.Inventories.AnyAsync(d => d.InventoryStatus != InventoryStatus.Closed, ct);
         }
 
-        public async Task<bool> CloseInventoryAsync(int id)
+        public async Task<bool> CloseInventoryAsync(int id, CancellationToken ct = default)
         {
-            var inventory = _context.Inventories.Find(id);
+            var inventory = await _context.Inventories.FindAsync([id], ct);
             if (inventory is null || inventory.InventoryStatus != InventoryStatus.InProgress)
             {
                 return false;
             }
 
             inventory.InventoryStatus = InventoryStatus.Closed;
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return true;
         }
 
-        public async Task<bool> CreateInventoryAsync(CreateInventoryDto dto)
+        public async Task<int> CreateInventoryAsync(CreateInventoryDto dto, CancellationToken ct = default)
         {
-            var isAnyNotClose = await IsAnyNotCloseInvetoryAsync();
+            var isAnyNotClose = await IsAnyNotCloseInvetoryAsync(ct);
             if (isAnyNotClose) throw new DomainException("There are other inventory that have not yet been closed.");
             var inventory = new Inventory
             {
@@ -61,14 +61,14 @@ namespace EzItam.Api.Services
             };
 
             _context.Inventories.Add(inventory);
-            await _context.SaveChangesAsync();
-            return true;
+            await _context.SaveChangesAsync(ct);
+            return inventory.Id;
         }
 
-        public async Task<bool> GenInventoryBookAsync(int id)
+        public async Task<bool> GenInventoryBookAsync(int id, CancellationToken ct = default)
         {
 
-            var inventory = await _context.Inventories.FindAsync(id);
+            var inventory = await _context.Inventories.FindAsync([id], ct);
             if (inventory is null || inventory.InventoryStatus != InventoryStatus.Open)
             {
                 throw new DomainException("Inventory not found or not open.");
@@ -91,10 +91,10 @@ namespace EzItam.Api.Services
 
             return await strategy.ExecuteAsync(async () =>
             {
-                var transaction = await _context.Database.BeginTransactionAsync();
+                var transaction = await _context.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    var allAssetsExceptDisposedAndLost = await _context.Assets.Where(d => d.Status != AssetStatus.Disposed && d.Status != AssetStatus.Lost).ToListAsync();
+                    var allAssetsExceptDisposedAndLost = await _context.Assets.Where(d => d.Status != AssetStatus.Disposed && d.Status != AssetStatus.Lost).ToListAsync(ct);
 
                     if (allAssetsExceptDisposedAndLost.Count == 0)
                     {
@@ -120,23 +120,24 @@ namespace EzItam.Api.Services
                     _context.InventoryDetails.AddRange(inventoryDetails);
 
                     inventory.InventoryStatus = InventoryStatus.InProgress;
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(ct);
 
-                    await transaction.CommitAsync();
+                    await transaction.CommitAsync(ct);
 
                     return true;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    await transaction.RollbackAsync();
-                    throw new Exception(ex.Message);
+                    await transaction.RollbackAsync(ct);
+                    throw;
                 }
             });
         }
 
-        public async Task<bool> DeleteInventoryAsync(int id)
+        public async Task<bool> DeleteInventoryAsync(int id, CancellationToken ct = default)
         {
-            var model = await _context.Inventories.FindAsync(id) ?? throw new DomainException("Not found.");
+            var model = await _context.Inventories.FindAsync([id], ct);
+            if (model is null) return false;
 
             if (model.InventoryStatus == InventoryStatus.Closed)
             {
@@ -144,11 +145,11 @@ namespace EzItam.Api.Services
             }
 
             _context.Inventories.Remove(model);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return true;
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetAllInventoriesAsync()
+        public async Task<IEnumerable<InventoryDto>> GetAllInventoriesAsync(CancellationToken ct = default)
         {
             var inventories = _context.Inventories
                 .AsNoTracking()
@@ -163,12 +164,12 @@ namespace EzItam.Api.Services
                     ScannedAssetsCount = i.InventoryDetails.Count(d => d.ScanCount > 0),
                     TotalAssetsCount = i.InventoryDetails.Count()
                 });
-            return await inventories.ToListAsync();
+            return await inventories.ToListAsync(ct);
         }
 
-        public async Task<InventoryDto?> GetInventoryByIdAsync(int inventoryId)
+        public async Task<InventoryDto?> GetInventoryByIdAsync(int inventoryId, CancellationToken ct = default)
         {
-            var inventory = await _context.Inventories.FindAsync(inventoryId);
+            var inventory = await _context.Inventories.FindAsync([inventoryId], ct);
             if (inventory is null)
             {
                 return null;
@@ -185,9 +186,9 @@ namespace EzItam.Api.Services
             };
         }
 
-        public async Task<bool> UpdateInventoryAsync(int id, UpdateInventoryDto dto)
+        public async Task<bool> UpdateInventoryAsync(int id, UpdateInventoryDto dto, CancellationToken ct = default)
         {
-            var inventory = await _context.Inventories.FindAsync(id);
+            var inventory = await _context.Inventories.FindAsync([id], ct);
 
             if (inventory is null)
             {
@@ -205,11 +206,11 @@ namespace EzItam.Api.Services
             inventory.Notes = dto.Notes;
             inventory.InventoryStatus = dto.InventoryStatus;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return true;
         }
 
-        public async Task<InventoryDetailResponseDto?> GetInventoryDetailByInventoryIdAsync(int id)
+        public async Task<InventoryDetailResponseDto?> GetInventoryDetailByInventoryIdAsync(int id, CancellationToken ct = default)
         {
             // 1. Lấy thông tin chung của đợt kiểm kê (Inventory)
             var inventory = await _context.Inventories
@@ -224,11 +225,11 @@ namespace EzItam.Api.Services
                     Notes = i.Notes,
                     InventoryStatus = i.InventoryStatus
                 })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
 
             if (inventory is null)
             {
-                return new();
+                return null;
             }
 
             // 2. Lấy danh sách chi tiết thiết bị kiểm kê và kết hợp các bảng liên quan
@@ -266,12 +267,12 @@ namespace EzItam.Api.Services
                     UpdatedBy = d.UpdatedBy,
                     UpdatedTime = d.UpdatedTime
                 })
-                .ToListAsync();
+                .ToListAsync(ct);
 
             return inventory;
         }
 
-        public async Task<InventoryDetailDto?> GetDetailByTag(int inventoryId, string tag)
+        public async Task<InventoryDetailDto?> GetDetailByTag(int inventoryId, string tag, CancellationToken ct = default)
         {
             var invDetail = await _context.InventoryDetails
                 .AsNoTracking()
@@ -284,7 +285,7 @@ namespace EzItam.Api.Services
                 .Include(d => d.EmployeeIV)
                     .ThenInclude(d => d.Department)
                 .Where(d => d.InventoryId == inventoryId && d.Asset != null && d.Asset.AssetTag == tag)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
             if (invDetail is null) return new();
 
             return new InventoryDetailDto
@@ -315,9 +316,9 @@ namespace EzItam.Api.Services
             };
         }
 
-        public async Task<bool> PostScanResult(ScanResultRequest req)
+        public async Task<bool> PostScanResult(ScanResultRequest req, CancellationToken ct = default)
         {
-            var invAsset = await _context.InventoryDetails.FindAsync(req.Id) ?? throw new DomainException("Not found");
+            var invAsset = await _context.InventoryDetails.FindAsync([req.Id], ct) ?? throw new DomainException("Not found");
 
             invAsset.IdLocationIV = req.IdLocationIV;
             invAsset.IdEmployeeIV = req.IdEmployeeIV;
@@ -325,11 +326,11 @@ namespace EzItam.Api.Services
             invAsset.Notes = req.Notes;
             invAsset.ScanCount += 1;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return true;
         }
 
-        public async Task<bool> PostDiff(int inventoryId)
+        public async Task<bool> PostDiff(int inventoryId, CancellationToken ct = default)
         {
 
 
@@ -337,7 +338,7 @@ namespace EzItam.Api.Services
 
             return await strategy.ExecuteAsync(async () =>
             {
-                var inventory = await _context.Inventories.Where(i => i.Id == inventoryId).FirstOrDefaultAsync() ?? throw new DomainException("Inventory not found.");
+                var inventory = await _context.Inventories.Where(i => i.Id == inventoryId).FirstOrDefaultAsync(ct) ?? throw new DomainException("Inventory not found.");
                 if (inventory.InventoryStatus != InventoryStatus.InProgress)
                 {
                     throw new DomainException("Unable to post this inventory.");
@@ -345,16 +346,16 @@ namespace EzItam.Api.Services
 
                 var assets = await _context.InventoryDetails
                                     .Where(d => d.InventoryId == inventoryId && (d.IdEmployee != d.IdEmployeeIV || d.IdLocation != d.IdLocationIV || d.Status != d.AssetStatusIV))
-                                    .ToListAsync();
+                                    .ToListAsync(ct);
 
                 var assetIds = assets.Select(d => d.IdAsset).Distinct().ToList();
 
                 var assetsToUpdate = await _context.Assets
                     .Where(a => assetIds.Contains(a.Id))
-                    .ToListAsync();
+                    .ToListAsync(ct);
 
 
-                var transaction = await _context.Database.BeginTransactionAsync();
+                var transaction = await _context.Database.BeginTransactionAsync(ct);
                 try
                 {
                     foreach (var item in assets)
@@ -369,14 +370,14 @@ namespace EzItam.Api.Services
                     }
 
                     inventory.InventoryStatus = inventory.InventoryStatus + 1;
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(ct);
 
-                    await transaction.CommitAsync();
+                    await transaction.CommitAsync(ct);
                     return true;
                 }
                 catch (Exception)
                 {
-                    await transaction.RollbackAsync();
+                    await transaction.RollbackAsync(ct);
                     throw;
                 }
             });

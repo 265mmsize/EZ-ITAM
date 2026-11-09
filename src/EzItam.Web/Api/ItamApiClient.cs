@@ -35,19 +35,31 @@ public sealed class ItamApiClient
         if (resp.IsSuccessStatusCode) return resp;
 
         var message = "요청을 처리하지 못했습니다.";
-        try
-        {
-            var err = await resp.Content.ReadFromJsonAsync<ApiErrorBody>(Json);
-            if (!string.IsNullOrWhiteSpace(err?.Message)) message = err.Message!;
-        }
-        catch (JsonException) { }
+        message = await ReadErrorMessage(resp.Content, message);
         resp.Dispose();
         throw new ApiException(resp.StatusCode, message);
+    }
+
+    private static async Task<string> ReadErrorMessage(HttpContent content, string fallback)
+    {
+        try
+        {
+            var error = await content.ReadFromJsonAsync<ApiErrorBody>(Json);
+            var message = error?.Message ?? error?.Error ?? error?.Detail ?? error?.Title;
+            return string.IsNullOrWhiteSpace(message) ? fallback : message;
+        }
+        catch (JsonException)
+        {
+            return fallback;
+        }
     }
 
     private sealed class ApiErrorBody
     {
         public string? Message { get; set; }
+        public string? Error { get; set; }
+        public string? Detail { get; set; }
+        public string? Title { get; set; }
     }
 
     /// <summary>객체의 값이 있는 속성만 쿼리 문자열로 만듭니다.</summary>
@@ -75,8 +87,8 @@ public sealed class ItamApiClient
         using var resp = await _http.SendAsync(anon);
         if (!resp.IsSuccessStatusCode)
         {
-            var err = await resp.Content.ReadFromJsonAsync<ApiErrorBody>(Json);
-            throw new ApiException(resp.StatusCode, err?.Message ?? "로그인에 실패했습니다.");
+            var message = await ReadErrorMessage(resp.Content, "로그인에 실패했습니다.");
+            throw new ApiException(resp.StatusCode, message);
         }
         return (await resp.Content.ReadFromJsonAsync<TokenResponse>(Json))!;
     }
@@ -160,10 +172,10 @@ public sealed class ItamApiClient
 
     public async Task<List<InventoryDto>> ListInventoryAsync() => await Send<List<InventoryDto>>(HttpMethod.Get, "api/v1/inventories");
     public async Task<InventoryDto> GetInventoryByIdAsync(int id) => await Send<InventoryDto>(HttpMethod.Get, $"api/v1/inventories/{id}");
-    public async Task<bool> CreateInventoryAsync(InventoryDto dto) => await Send<bool>(HttpMethod.Post, "api/v1/inventories", dto);
-    public async Task<bool> UpdateInventoryAsync(int id, InventoryDto dto) => await Send<bool>(HttpMethod.Put, $"api/v1/inventories/{id}", dto);
-    public async Task<bool> DeleteInventoryAsync(int id) => await Send<bool>(HttpMethod.Delete, $"api/v1/inventories/{id}");
-    public async Task<bool> GenInventoryBookAsync(int id) => await Send<bool>(HttpMethod.Post, $"api/v1/inventories/{id}/genbook");
+    public Task<InventoryDto> CreateInventoryAsync(InventoryDto dto) => Send<InventoryDto>(HttpMethod.Post, "api/v1/inventories", dto);
+    public Task UpdateInventoryAsync(int id, InventoryDto dto) => SendNoContent(HttpMethod.Put, $"api/v1/inventories/{id}", dto);
+    public Task DeleteInventoryAsync(int id) => SendNoContent(HttpMethod.Delete, $"api/v1/inventories/{id}");
+    public Task GenInventoryBookAsync(int id) => SendNoContent(HttpMethod.Post, $"api/v1/inventories/{id}/genbook");
     public async Task<InventoryDetailResponseDto?> GetInventoryDetailByInventoryIdAsync(int id) => await Send<InventoryDetailResponseDto?>(HttpMethod.Get, $"api/v1/inventories/{id}/details");
     public async Task<InventoryDetailDto?> GetAssetByInventoryIdAndTag(int id, string tag)
     {
@@ -172,12 +184,12 @@ public sealed class ItamApiClient
     }
 
     public async Task<bool> PostScanResult(ScanResultRequest req) => await Send<bool>(HttpMethod.Post, "api/v1/inventories/scan", req);
-    public async Task<bool> PostDiff(int id) => await Send<bool>(HttpMethod.Post, $"api/v1/inventories/postdiff/{id}");
+    public Task PostDiff(int id) => SendNoContent(HttpMethod.Post, $"api/v1/inventories/postdiff/{id}");
 
 
     public async Task<List<HrEmployeeDto>> GetListEmployeesByOrgCode(string orgCode) => await Send<List<HrEmployeeDto>>(HttpMethod.Get, $"api/v1/external/hr/employees?orgCode={orgCode}");
 
-    public async Task<AssetDto?> GetAssetByTagAsync(string tag) => await Send<AssetDto?>(HttpMethod.Get, $"api/v1/assets/bytag?tag={tag}");
+    public Task<AssetDto?> GetAssetByTagAsync(string tag) => Send<AssetDto?>(HttpMethod.Get, Query("api/v1/assets/bytag", new { tag }));
 
     public async Task TransferAssetAsync(TransferAssetRequest req) => await SendNoContent(HttpMethod.Post, "api/v1/assets/transfer", req);
 

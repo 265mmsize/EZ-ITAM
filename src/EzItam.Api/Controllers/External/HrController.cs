@@ -13,26 +13,14 @@ namespace EzItam.Api.Controllers.External
         [AllowAnonymous]
         public async Task<IActionResult> GetList([FromQuery] string orgCode, CancellationToken cancellationToken)
         {
-            try
-            {
-                var employees = await _hrService.GetEmployeesByOrgCode(orgCode, cancellationToken);
+            var employees = await _hrService.GetEmployeesByOrgCode(orgCode, cancellationToken);
 
-                return Ok(new
-                {
-                    success = true,
-                    count = employees.Count,
-                    data = employees
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Lỗi hệ thống khi truy vấn dữ liệu.",
-                    error = ex.Message
-                });
-            }
+                success = true,
+                count = employees.Count,
+                data = employees
+            });
         }
     }
 }

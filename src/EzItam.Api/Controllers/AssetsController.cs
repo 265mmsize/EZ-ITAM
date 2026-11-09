@@ -107,47 +107,39 @@ public class AssetsController : ApiControllerBase
     [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult> GetLabels([FromQuery] string ids, CancellationToken ct)
     {
+        List<int> idList;
         try
         {
             byte[] base64Decoded = Convert.FromBase64String(ids);
-            var idList = System.Text.Encoding.UTF8.GetString(base64Decoded).Split(',').Select(int.Parse).ToList();
-            var res = await _assets.GetListAssetLabelsByIdsAsync(idList, ct);
-            return Ok(res);
-
+            var values = System.Text.Encoding.UTF8.GetString(base64Decoded).Split(',');
+            if (values.Length == 0 || values.Any(value => !int.TryParse(value, out _)))
+            {
+                throw new DomainException("Invalid asset ids.");
+            }
+            idList = values.Select(int.Parse).ToList();
         }
-        catch (Exception ex)
+        catch (FormatException)
         {
-            return BadRequest(new { error = ex.Message });
+            throw new DomainException("Invalid asset ids.");
         }
+
+        var res = await _assets.GetListAssetLabelsByIdsAsync(idList, ct);
+        return Ok(res);
     }
 
     [HttpGet("bytag")]
     [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> GetAssetByTag([FromQuery] string tag, CancellationToken ct)
     {
-        try
-        {
-            var asset = await _assets.GetAssetByTagAsync(tag, ct);
-            return Ok(asset);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var asset = await _assets.GetAssetByTagAsync(tag, ct);
+        return asset is null ? NotFoundError("자산") : Ok(asset);
     }
 
     [HttpPost("transfer")]
     [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> TransferAsset([FromBody] TransferAssetRequest req, CancellationToken ct)
     {
-        try
-        {
-            await _assets.TransferAssetAsync(req, ct);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { success = false, message = ex.Message });
-        }
+        await _assets.TransferAssetAsync(req, ct);
+        return NoContent();
     }
 }
