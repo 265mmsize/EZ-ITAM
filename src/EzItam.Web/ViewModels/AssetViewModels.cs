@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace EzItam.Web.ViewModels;
 
@@ -70,4 +71,18 @@ public class LicenseAssignViewModel
     [StringLength(500)]
     [Display(Name = "비고")]
     public string? Notes { get; set; }
+}
+public class AssetLabelViewModel
+{
+    [JsonPropertyName("asset_id")]
+    public int AssetId { get; set; }
+
+    [JsonPropertyName("asset_tag")]
+    public string AssetTag { get; set; } = string.Empty;
+    [JsonPropertyName("asset_name")]
+    public string AssetName { get; set; } = string.Empty;
+    [JsonPropertyName("serial_number")]
+    public string SerialNumber { get; set; } = string.Empty;
+    [JsonPropertyName("ip_address")]
+    public string IpAddress { get; set; } = string.Empty;
 }

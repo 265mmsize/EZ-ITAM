@@ -31,6 +31,10 @@ public class AppDbContext : IdentityDbContext
     public DbSet<Agent> Agents => Set<Agent>();
     public DbSet<AgentSoftware> AgentSoftware => Set<AgentSoftware>();
 
+    public DbSet<Inventory> Inventories => Set<Inventory>();
+    public DbSet<InventoryDetail> InventoryDetails => Set<InventoryDetail>();
+    public DbSet<EmployeeTemp> EmployeeTemps => Set<EmployeeTemp>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -124,6 +128,71 @@ public class AppDbContext : IdentityDbContext
             e.HasIndex(a => new { a.EntityName, a.EntityKey });
             e.HasIndex(a => a.Timestamp);
         });
+
+        builder.Entity<Inventory>(e =>
+        {
+            e.ToTable("Inventories");
+            e.Property(i => i.Name).IsRequired().HasMaxLength(50);
+            e.Property(i => i.InventoryStatus).IsRequired().HasConversion<int>();
+            e.HasIndex(i => i.Name).IsUnique();
+            e.Property(i => i.DateFrom).IsRequired();
+            e.Property(i => i.DateTo).IsRequired();
+            e.Property(i => i.Notes).IsRequired(false).HasMaxLength(200);
+        });
+
+        builder.Entity<InventoryDetail>(e =>
+        {
+            e.ToTable("InventoryDetails");
+            e.HasOne(d => d.Inventory).WithMany(i => i.InventoryDetails).HasForeignKey(d => d.InventoryId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(d => d.Asset).WithMany(a => a.InventoryDetails).HasForeignKey(d => d.IdAsset).OnDelete(DeleteBehavior.Cascade);
+            e.Property(d => d.IdLocation).IsRequired(false);
+            e.HasOne(d => d.Location).WithMany(l => l.InventoryDetails).HasForeignKey(d => d.IdLocation).OnDelete(DeleteBehavior.Restrict);
+            e.Property(d => d.IdEmployee).IsRequired(false);
+            e.HasOne(d => d.Employee).WithMany(emp => emp.InventoryDetails).HasForeignKey(d => d.IdEmployee).OnDelete(DeleteBehavior.Restrict);
+            e.Property(d => d.IdLocationIV).IsRequired(false);
+            e.HasOne(d => d.LocationIV).WithMany(l => l.InventoryDetailsIV).HasForeignKey(d => d.IdLocationIV).OnDelete(DeleteBehavior.Restrict);
+            e.Property(d => d.IdEmployeeIV).IsRequired(false);
+            e.HasOne(d => d.EmployeeIV).WithMany(emp => emp.InventoryDetailsIV).HasForeignKey(d => d.IdEmployeeIV).OnDelete(DeleteBehavior.Restrict);
+            e.Property(d => d.Notes).IsRequired(false).HasMaxLength(200);
+            e.Property(d => d.ScanCount).IsRequired().HasDefaultValue(0);
+            e.HasIndex(d => new { d.InventoryId, d.IdAsset }).IsUnique();
+            e.HasIndex(d => new { d.InventoryId, d.ScanCount });
+        });
+
+        builder.Entity<Employee>(e =>
+        {
+            e.Property(d => d.Source).IsRequired(false);
+        });
+        builder.Entity<EmployeeTemp>(e =>
+        {
+            e.ToTable("EmployeeTemps");
+            e.Property(d => d.Id);
+            e.Property(d => d.OrgCode).IsRequired(true);
+            e.Property(d => d.EmployeeNo).IsRequired(true);
+            e.Property(d => d.Name).IsRequired(true);
+            e.Property(d => d.Email).IsRequired(false);
+            e.Property(d => d.DeptCode).IsRequired(false);
+            e.Property(d => d.DeptName).IsRequired(false);
+            e.Property(d => d.DeptLevel).IsRequired(false);
+            e.Property(d => d.TitleCode).IsRequired(false);
+            e.Property(d => d.TitleName).IsRequired(false);
+            e.Property(d => d.PositionCode).IsRequired(false);
+            e.Property(d => d.PositionName).IsRequired(false);
+            e.Property(d => d.IsResigned).IsRequired(false);
+            e.Property(d => d.DateValue1).IsRequired(false);
+            e.Property(d => d.DateValue2).IsRequired(false);
+            e.Property(d => d.DateValue3).IsRequired(false);
+            e.Property(d => d.DateValue4).IsRequired(false);
+            e.Property(d => d.DateValue5).IsRequired(false);
+            e.Property(d => d.DateValue6).IsRequired(false);
+            e.Property(d => d.DateValue7).IsRequired(false);
+            e.Property(d => d.DateValue8).IsRequired(false);
+            e.Property(d => d.DateValue9).IsRequired(false);
+
+            e.HasIndex(d => new { d.OrgCode, d.EmployeeNo }).IsUnique();
+        });
+
+
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -153,7 +222,8 @@ public class AppDbContext : IdentityDbContext
     private static readonly HashSet<string> AuditedEntities = new()
     {
         nameof(Asset), nameof(AssetCategory), nameof(Location), nameof(Department), nameof(Employee),
-        nameof(Vendor), nameof(AssetAssignment), nameof(MaintenanceRecord), nameof(SoftwareLicense), nameof(LicenseAssignment)
+        nameof(Vendor), nameof(AssetAssignment), nameof(MaintenanceRecord), nameof(SoftwareLicense), nameof(LicenseAssignment),
+        nameof(Inventory), nameof(InventoryDetail)
     };
 
     /// <summary>

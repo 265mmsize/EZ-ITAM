@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace EzItam.Contracts;
 
 // 화면과 API가 공유하는 데이터 모양입니다. 엔티티의 속성 이름을 그대로 따르므로
@@ -120,6 +123,7 @@ public class MaintenanceDto
     public MaintenanceType Type { get; set; }
     public DateTime Date { get; set; } = DateTime.Today;
     public string Description { get; set; } = string.Empty;
+    [DisplayFormat(DataFormatString = "{0:0}", ApplyFormatInEditMode = true)]
     public decimal? Cost { get; set; }
     public int? VendorId { get; set; }
     public VendorRef? Vendor { get; set; }
@@ -157,6 +161,7 @@ public class SoftwareLicenseDto
     public DateTime? ExpiryDate { get; set; }
     public int? VendorId { get; set; }
     public VendorRef? Vendor { get; set; }
+    [DisplayFormat(DataFormatString = "{0:0}", ApplyFormatInEditMode = true)]
     public decimal? Cost { get; set; }
     public string? Notes { get; set; }
     public int UsedSeats { get; set; }
@@ -361,4 +366,146 @@ public sealed class AgentRingRequest
 public sealed class AgentLinkRequest
 {
     public int? AssetId { get; set; }
+}
+
+public class AssetLabelsDto
+{
+    [JsonPropertyName("asset_id")]
+    public int AssetId { get; set; }
+    [JsonPropertyName("asset_tag")]
+    public string AssetTag { get; set; } = string.Empty;
+    [JsonPropertyName("asset_name")]
+    public string AssetName { get; set; } = string.Empty;
+    [JsonPropertyName("serial_number")]
+    public string? SerialNumber { get; set; }
+    [JsonPropertyName("ip_address")]
+    public string? IpAddress { get; set; }
+}
+
+public class InventoryDto : IValidatableObject
+{
+    public int Id { get; set; }
+    [Required(ErrorMessage = "Inventory Name field is required.")]
+    public string Name { get; set; } = string.Empty;
+    [Required]
+    public DateOnly DateFrom { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    [Required]
+    public DateOnly DateTo { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    public string? Notes { get; set; }
+    public InventoryStatus InventoryStatus { get; set; }
+    public int TotalAssetsCount { get; set; }
+    public int ScannedAssetsCount { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        if (DateTo < today)
+        {
+            yield return new ValidationResult(
+                "The inventory end date must be greater than today's date.",
+                [nameof(DateTo)]
+            );
+        }
+
+        if (DateTo < DateFrom)
+        {
+            yield return new ValidationResult(
+                "The inventory end date must be greater than or equal to the start date.",
+                [nameof(DateTo), nameof(DateFrom)]
+            );
+        }
+    }
+}
+
+public class CreateInventoryDto
+{
+    public string Name { get; set; } = string.Empty;
+    public DateOnly DateFrom { get; set; }
+    public DateOnly DateTo { get; set; }
+    public string? Notes { get; set; }
+    public string? CreatedBy { get; set; }
+}
+
+public class UpdateInventoryDto
+{
+    public string Name { get; set; } = string.Empty;
+    public DateOnly DateFrom { get; set; }
+    public DateOnly DateTo { get; set; }
+    public string? Notes { get; set; }
+    public InventoryStatus InventoryStatus { get; set; }
+}
+
+public class InventoryDetailDto
+{
+    public int Id { get; set; }
+    public int IdAsset { get; set; }
+    public string? AssetTag { get; set; }
+    public string? CategoryName { get; set; }
+    public string? AssetName { get; set; }
+    public int IdLocation { get; set; }
+    public string? LocationName { get; set; }
+    public int IdEmployee { get; set; }
+    public string? EmployeeName { get; set; }
+    public AssetStatus Status { get; set; }
+    public int IdLocationIV { get; set; }
+    public string? LocationIVName { get; set; }
+    public int IdEmployeeIV { get; set; }
+    public string? EmployeeIVName { get; set; }
+    public AssetStatus StatusIV { get; set; }
+    public int ScanCount { get; set; }
+    public string? Notes { get; set; }
+    public string? UpdatedBy { get; set; }
+    public DateTime UpdatedTime { get; set; }
+}
+
+public class InventoryDetailResponseDto : InventoryDto
+{
+    public List<InventoryDetailDto> Details { get; set; } = [];
+}
+
+public class ScanResultRequest
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    [JsonPropertyName("idLocationIV")]
+    public int? IdLocationIV { get; set; }
+    [JsonPropertyName("statusIV")]
+    public int StatusIV { get; set; }
+    [JsonPropertyName("idEmployeeIV")]
+    public int? IdEmployeeIV { get; set; }
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+}
+
+public class ScanResultDto
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public int ScanCount { get; set; }
+}
+
+public class HrEmployeeDto
+{
+    public string OrgCode { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string EmployeeName { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? DeptCode { get; set; }
+    public string? DeptName { get; set; }
+    public string? DeptLevel { get; set; }
+    public string? TitleCode { get; set; }
+    public string? TitleName { get; set; }
+    public string? PositionCode { get; set; }
+    public string? PositionName { get; set; }
+    public string? IsResigned { get; set; }
+}
+
+public class TransferAssetRequest
+{
+    public int AssetId { get; set; }
+    public int? NewEmployeeId { get; set; }
+    public int? NewLocationId { get; set; }
+    public int NewStatus { get; set; }
+    public string Notes { get; set; } = string.Empty;
 }

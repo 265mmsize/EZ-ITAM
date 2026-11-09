@@ -102,4 +102,44 @@ public class AssetsController : ApiControllerBase
         await _assets.ChangeStatusAsync(id, req.NewStatus, req.Notes, ct);
         return NoContent();
     }
+
+    [HttpGet("labels")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<ActionResult> GetLabels([FromQuery] string ids, CancellationToken ct)
+    {
+        List<int> idList;
+        try
+        {
+            byte[] base64Decoded = Convert.FromBase64String(ids);
+            var values = System.Text.Encoding.UTF8.GetString(base64Decoded).Split(',');
+            if (values.Length == 0 || values.Any(value => !int.TryParse(value, out _)))
+            {
+                throw new DomainException("Invalid asset ids.");
+            }
+            idList = values.Select(int.Parse).ToList();
+        }
+        catch (FormatException)
+        {
+            throw new DomainException("Invalid asset ids.");
+        }
+
+        var res = await _assets.GetListAssetLabelsByIdsAsync(idList, ct);
+        return Ok(res);
+    }
+
+    [HttpGet("bytag")]
+    [Authorize(Policy = "CanEdit")]
+    public async Task<IActionResult> GetAssetByTag([FromQuery] string tag, CancellationToken ct)
+    {
+        var asset = await _assets.GetAssetByTagAsync(tag, ct);
+        return asset is null ? NotFoundError("자산") : Ok(asset);
+    }
+
+    [HttpPost("transfer")]
+    [Authorize(Policy = "CanEdit")]
+    public async Task<IActionResult> TransferAsset([FromBody] TransferAssetRequest req, CancellationToken ct)
+    {
+        await _assets.TransferAssetAsync(req, ct);
+        return NoContent();
+    }
 }

@@ -52,9 +52,79 @@ body { background: #f3f4f6; }
 
 .login-card { max-width: 400px; margin: 4rem auto; }
 
+
+
+/* --- GIAO DIỆN MOBILE & RESPONSIVE (Màn hình từ 992px trở xuống) --- */
+
+/* Ẩn các thành phần di động trên Desktop */
+.mobile-header,
+.sidebar-backdrop,
+.sidebar-close-btn {
+    display: none;
+}
+
 @media (max-width: 992px) {
-  .app-shell { flex-direction: column; }
-  .sidebar { width: 100%; flex: none; height: auto; position: static; }
-  .content { padding: 1rem; }
-  .dl-grid { grid-template-columns: 7rem 1fr; }
+    /* Đổi hướng app-shell thành cột dọc */
+    .app-shell {
+        display: block !important;
+        flex-direction: column;
+    }
+
+    /* Thanh Header trên cùng dành riêng cho Mobile */
+    .mobile-header {
+        display: flex !important;
+        position: sticky;
+        top: 0;
+        z-index: 1040;
+        background-color: #212529;
+        color: #fff;
+        padding: 10px 15px;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Biến Sidebar thành dạng Drawer (Menu trượt ẩn bên trái) */
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        left: -280px; /* Ẩn hẳn sang bên trái màn hình */
+        width: 280px !important;
+        height: 100vh !important;
+        z-index: 1060 !important;
+        transition: left 0.3s ease-in-out;
+        background-color: #212529;
+        overflow-y: auto;
+    }
+
+        /* Khi kích hoạt mở menu */
+        .sidebar.show {
+            left: 0 !important;
+        }
+
+    /* Hiển thị nút đóng menu (dấu X) bên trong sidebar trên mobile */
+    .sidebar-close-btn {
+        display: block !important;
+    }
+
+    /* Lớp nền mờ (Backdrop) khi mở menu */
+    .sidebar-backdrop.show {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+    }
+
+    /* Khoảng đệm nội dung chính trên mobile */
+    .content {
+        padding: 1rem !important;
+    }
+
+    .dl-grid {
+        grid-template-columns: 7rem 1fr;
+    }
 }

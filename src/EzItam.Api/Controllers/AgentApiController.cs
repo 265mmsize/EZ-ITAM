@@ -19,16 +19,14 @@ public class AgentApiController : ControllerBase
     [HttpPost("enroll")]
     public async Task<IActionResult> Enroll([FromBody] EnrollRequest request, CancellationToken ct)
     {
-        try { return Ok(await _agents.EnrollAsync(request, ct)); }
-        catch (UnauthorizedAccessException) { return Unauthorized(); }
-        catch (DomainException ex) { return BadRequest(new { error = ex.Message }); }
+        return Ok(await _agents.EnrollAsync(request, ct));
     }
 
     [HttpPost("heartbeat")]
     public async Task<IActionResult> Heartbeat([FromBody] HeartbeatRequest request, CancellationToken ct)
     {
         var agent = await _agents.AuthenticateAsync(BearerToken(), ct);
-        if (agent is null) return Unauthorized();
+        if (agent is null) return Unauthorized(new ApiError { Message = "인증되지 않은 에이전트입니다." });
         return Ok(await _agents.HeartbeatAsync(agent, request, ct));
     }
 
@@ -37,14 +35,14 @@ public class AgentApiController : ControllerBase
     public async Task<IActionResult> Inventory(CancellationToken ct)
     {
         var agent = await _agents.AuthenticateAsync(BearerToken(), ct);
-        if (agent is null) return Unauthorized();
+        if (agent is null) return Unauthorized(new ApiError { Message = "인증되지 않은 에이전트입니다." });
         if (agent.Status != AgentStatus.Approved)
-            return StatusCode(StatusCodes.Status403Forbidden, new { error = "승인되지 않은 에이전트입니다." });
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiError { Message = "승인되지 않은 에이전트입니다." });
 
         var payload = await ReadPayloadAsync(ct);
-        if (payload is null) return BadRequest(new { error = "인벤토리 본문을 읽을 수 없습니다." });
+        if (payload is null) return BadRequest(new ApiError { Message = "인벤토리 본문을 읽을 수 없습니다." });
         if (payload.Hardware is null || payload.Software is null || string.IsNullOrWhiteSpace(payload.Hardware.HostName))
-            return BadRequest(new { error = "hardware, software, hostName 은 필수입니다." });
+            return BadRequest(new ApiError { Message = "hardware, software, hostName 은 필수입니다." });
 
         await _agents.ApplyInventoryAsync(agent, payload, ct);
         return Accepted(new { received = payload.Software.Count });
@@ -55,8 +53,9 @@ public class AgentApiController : ControllerBase
     public async Task<IActionResult> UpdatePackage([FromServices] IUpdateCatalog updates, CancellationToken ct)
     {
         var agent = await _agents.AuthenticateAsync(BearerToken(), ct);
-        if (agent is null) return Unauthorized();
-        if (agent.Status != AgentStatus.Approved) return StatusCode(StatusCodes.Status403Forbidden);
+        if (agent is null) return Unauthorized(new ApiError { Message = "인증되지 않은 에이전트입니다." });
+        if (agent.Status != AgentStatus.Approved)
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiError { Message = "승인되지 않은 에이전트입니다." });
         var path = updates.GetPackagePath(agent.Ring);
         if (path is null || !System.IO.File.Exists(path)) return NotFound();
         return PhysicalFile(path, "application/zip", Path.GetFileName(path));
