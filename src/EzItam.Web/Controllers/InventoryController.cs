@@ -8,9 +8,9 @@ namespace EzItam.Web.Controllers
 {
     public class InventoryController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : BaseController(api, loc)
     {
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken ct)
         {
-            var inventories = await Api.ListInventoryAsync();
+            var inventories = await Api.ListInventoryAsync(ct);
             return View(inventories);
         }
 
@@ -24,7 +24,7 @@ namespace EzItam.Web.Controllers
 
 
         [HttpPost, Authorize(Policy = "CanEdit"), ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(InventoryDto model)
+        public async Task<IActionResult> Create(InventoryDto model, CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
@@ -33,7 +33,7 @@ namespace EzItam.Web.Controllers
 
             try
             {
-                await Api.CreateInventoryAsync(model);
+                await Api.CreateInventoryAsync(model, ct);
                 Success(L["inv.create.successfully"]);
                 return RedirectToAction(nameof(Index));
             }
@@ -45,20 +45,27 @@ namespace EzItam.Web.Controllers
         }
 
         [Authorize(Policy = "CanEdit")]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, CancellationToken ct)
         {
-            var model = await Api.GetInventoryByIdAsync(id);
-            return View("Form", model);
+            try
+            {
+                var model = await Api.GetInventoryByIdAsync(id, ct);
+                return View("Form", model);
+            }
+            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost, Authorize(Policy = "CanEdit"), ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, InventoryDto model)
+        public async Task<IActionResult> Edit(int id, InventoryDto model, CancellationToken ct)
         {
             if (id != model.Id) return BadRequest();
             if (!ModelState.IsValid) return View("Form", model);
             try
             {
-                await Api.UpdateInventoryAsync(id, model);
+                await Api.UpdateInventoryAsync(id, model, ct);
                 Success(L["inv.update.successfully"]);
                 return RedirectToAction(nameof(Index));
             }
@@ -70,11 +77,11 @@ namespace EzItam.Web.Controllers
         }
 
         [HttpPost, Authorize(Policy = "AdminOnly"), ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             try
             {
-                await Api.DeleteInventoryAsync(id);
+                await Api.DeleteInventoryAsync(id, ct);
                 Success(L["inv.delete.successfully"]);
             }
             catch (ApiException ex)
@@ -85,24 +92,24 @@ namespace EzItam.Web.Controllers
         }
 
         [Authorize(Policy = "CanEdit")]
-        public async Task<IActionResult> Genbook(int id)
+        public async Task<IActionResult> Genbook(int id, CancellationToken ct)
         {
             try
             {
-                await Api.GenInventoryBookAsync(id);
+                await Api.GenInventoryBookAsync(id, ct);
                 return RedirectToAction(nameof(Details), new { id });
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 Error(L[ex.Message]);
             }
             return RedirectToAction(nameof(Index));
         }
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, CancellationToken ct)
         {
             try
             {
-                var inventories = await Api.GetInventoryDetailByInventoryIdAsync(id);
+                var inventories = await Api.GetInventoryDetailByInventoryIdAsync(id, ct);
                 return View(inventories);
             }
             catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -112,10 +119,14 @@ namespace EzItam.Web.Controllers
         }
 
         [Authorize(Policy = "CanEdit")]
-        public async Task<IActionResult> Scan(int id)
+        public async Task<IActionResult> Scan(int id, CancellationToken ct)
         {
-            var inventory = await Api.GetInventoryByIdAsync(id);
-            if (inventory is null)
+            InventoryDto inventory;
+            try
+            {
+                inventory = await Api.GetInventoryByIdAsync(id, ct);
+            }
+            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 return NotFound();
             }
@@ -128,9 +139,9 @@ namespace EzItam.Web.Controllers
 
         [HttpGet]
         [Authorize(Policy = "CanEdit")]
-        public async Task<ObjectResult> GetDetailByTag(int inventoryId, string tag)
+        public async Task<ObjectResult> GetDetailByTag(int inventoryId, string tag, CancellationToken ct)
         {
-            var detailByTag = await Api.GetAssetByInventoryIdAndTag(inventoryId, tag);
+            var detailByTag = await Api.GetAssetByInventoryIdAndTag(inventoryId, tag, ct);
             if (detailByTag is null || detailByTag.Id == 0)
             {
                 return Ok(new { success = false, message = L["inv.scan.invalid"].Value });
@@ -140,37 +151,29 @@ namespace EzItam.Web.Controllers
 
         [HttpPost]
         [Authorize(Policy = "CanEdit")]
-        public async Task<ObjectResult> SaveScanResult([FromBody]ScanResultRequest req)
+        public async Task<IActionResult> SaveScanResult([FromBody] ScanResultRequest req, CancellationToken ct)
         {
             try
             {
-                var res = await Api.PostScanResult(req);
-                return Ok(new
-                {
-                    success = res
-                });
+                var res = await Api.PostScanResult(req, ct);
+                return Ok(new { success = res });
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
-                return Ok(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return StatusCode((int)ex.StatusCode, new { success = false, message = ex.Message });
             }
-            
         }
 
         [Authorize(Policy = "CanEdit")]
-        public async Task<IActionResult> PostDiff(int id)
+        public async Task<IActionResult> PostDiff(int id, CancellationToken ct)
         {
             try
             {
-                await Api.PostDiff(id);
+                await Api.PostDiff(id, ct);
                 Success(L["inv.postdiff.successfully"]);
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 Error(L[ex.Message]);
             }

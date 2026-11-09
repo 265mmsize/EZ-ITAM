@@ -227,30 +227,34 @@ public class AssetsController(ItamApiClient api, IStringLocalizer<SharedResource
         return View();
     }
 
-    public async Task<IActionResult> GetAssetByTag(string tag)
+    public async Task<IActionResult> GetAssetByTag(string tag, CancellationToken ct)
     {
         try
         {
-            var asset = await Api.GetAssetByTagAsync(tag);
+            var asset = await Api.GetAssetByTagAsync(tag, ct);
             return Ok(new { success = true, item = asset });
         }
         catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return Ok(new { success = false, message = L["assets.scan.notfound"].Value });
         }
+        catch (ApiException ex)
+        {
+            return StatusCode((int)ex.StatusCode, new { success = false, message = ex.Message });
+        }
     }
 
     [HttpPost]
-    public async Task<IActionResult> TransferAsset(TransferAssetRequest request)
+    public async Task<IActionResult> TransferAsset(TransferAssetRequest request, CancellationToken ct)
     {
         try
         {
-            await Api.TransferAssetAsync(request);
+            await Api.TransferAssetAsync(request, ct);
             return Ok(new { success = true});
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            return Ok(new { success = false, message = ex.Message });
+            return StatusCode((int)ex.StatusCode, new { success = false, message = ex.Message });
         }
     }
 

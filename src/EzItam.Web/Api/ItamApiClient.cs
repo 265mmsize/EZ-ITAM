@@ -16,22 +16,22 @@ public sealed class ItamApiClient
     public ItamApiClient(HttpClient http) => _http = http;
 
     // ---------- 공통 ----------
-    private async Task<T> Send<T>(HttpMethod method, string path, object? body = null)
+    private async Task<T> Send<T>(HttpMethod method, string path, object? body = null, CancellationToken ct = default)
     {
-        using var resp = await SendRaw(method, path, body);
-        return (await resp.Content.ReadFromJsonAsync<T>(Json)) ?? throw new ApiException(HttpStatusCode.InternalServerError, "빈 응답");
+        using var resp = await SendRaw(method, path, body, ct);
+        return (await resp.Content.ReadFromJsonAsync<T>(Json, ct)) ?? throw new ApiException(HttpStatusCode.InternalServerError, "빈 응답");
     }
 
-    private async Task SendNoContent(HttpMethod method, string path, object? body = null)
+    private async Task SendNoContent(HttpMethod method, string path, object? body = null, CancellationToken ct = default)
     {
-        using var resp = await SendRaw(method, path, body);
+        using var resp = await SendRaw(method, path, body, ct);
     }
 
-    private async Task<HttpResponseMessage> SendRaw(HttpMethod method, string path, object? body)
+    private async Task<HttpResponseMessage> SendRaw(HttpMethod method, string path, object? body, CancellationToken ct = default)
     {
         using var req = new HttpRequestMessage(method, path);
         if (body is not null) req.Content = JsonContent.Create(body, options: Json);
-        var resp = await _http.SendAsync(req);
+        var resp = await _http.SendAsync(req, ct);
         if (resp.IsSuccessStatusCode) return resp;
 
         var message = "요청을 처리하지 못했습니다.";
@@ -170,27 +170,38 @@ public sealed class ItamApiClient
         return await Send<List<AssetLabelViewModel>>(HttpMethod.Get, fromQuery);
     }
 
-    public async Task<List<InventoryDto>> ListInventoryAsync() => await Send<List<InventoryDto>>(HttpMethod.Get, "api/v1/inventories");
-    public async Task<InventoryDto> GetInventoryByIdAsync(int id) => await Send<InventoryDto>(HttpMethod.Get, $"api/v1/inventories/{id}");
-    public Task<InventoryDto> CreateInventoryAsync(InventoryDto dto) => Send<InventoryDto>(HttpMethod.Post, "api/v1/inventories", dto);
-    public Task UpdateInventoryAsync(int id, InventoryDto dto) => SendNoContent(HttpMethod.Put, $"api/v1/inventories/{id}", dto);
-    public Task DeleteInventoryAsync(int id) => SendNoContent(HttpMethod.Delete, $"api/v1/inventories/{id}");
-    public Task GenInventoryBookAsync(int id) => SendNoContent(HttpMethod.Post, $"api/v1/inventories/{id}/genbook");
-    public async Task<InventoryDetailResponseDto?> GetInventoryDetailByInventoryIdAsync(int id) => await Send<InventoryDetailResponseDto?>(HttpMethod.Get, $"api/v1/inventories/{id}/details");
-    public async Task<InventoryDetailDto?> GetAssetByInventoryIdAndTag(int id, string tag)
+    public Task<List<InventoryDto>> ListInventoryAsync(CancellationToken ct = default)
+        => Send<List<InventoryDto>>(HttpMethod.Get, "api/v1/inventories", ct: ct);
+    public Task<InventoryDto> GetInventoryByIdAsync(int id, CancellationToken ct = default)
+        => Send<InventoryDto>(HttpMethod.Get, $"api/v1/inventories/{id}", ct: ct);
+    public Task<InventoryDto> CreateInventoryAsync(InventoryDto dto, CancellationToken ct = default)
+        => Send<InventoryDto>(HttpMethod.Post, "api/v1/inventories", dto, ct);
+    public Task UpdateInventoryAsync(int id, InventoryDto dto, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Put, $"api/v1/inventories/{id}", dto, ct);
+    public Task DeleteInventoryAsync(int id, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Delete, $"api/v1/inventories/{id}", ct: ct);
+    public Task GenInventoryBookAsync(int id, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Post, $"api/v1/inventories/{id}/genbook", ct: ct);
+    public Task<InventoryDetailResponseDto> GetInventoryDetailByInventoryIdAsync(int id, CancellationToken ct = default)
+        => Send<InventoryDetailResponseDto>(HttpMethod.Get, $"api/v1/inventories/{id}/details", ct: ct);
+    public async Task<InventoryDetailDto?> GetAssetByInventoryIdAndTag(int id, string tag, CancellationToken ct = default)
     {
         var fromQuery = Query($"api/v1/inventories/{id}/asset", new { tag });
-        return await Send<InventoryDetailDto?>(HttpMethod.Get, fromQuery);
+        return await Send<InventoryDetailDto?>(HttpMethod.Get, fromQuery, ct: ct);
     }
 
-    public async Task<bool> PostScanResult(ScanResultRequest req) => await Send<bool>(HttpMethod.Post, "api/v1/inventories/scan", req);
-    public Task PostDiff(int id) => SendNoContent(HttpMethod.Post, $"api/v1/inventories/postdiff/{id}");
+    public Task<bool> PostScanResult(ScanResultRequest req, CancellationToken ct = default)
+        => Send<bool>(HttpMethod.Post, "api/v1/inventories/scan", req, ct);
+    public Task PostDiff(int id, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Post, $"api/v1/inventories/postdiff/{id}", ct: ct);
 
 
     public async Task<List<HrEmployeeDto>> GetListEmployeesByOrgCode(string orgCode) => await Send<List<HrEmployeeDto>>(HttpMethod.Get, $"api/v1/external/hr/employees?orgCode={orgCode}");
 
-    public Task<AssetDto?> GetAssetByTagAsync(string tag) => Send<AssetDto?>(HttpMethod.Get, Query("api/v1/assets/bytag", new { tag }));
+    public Task<AssetDto> GetAssetByTagAsync(string tag, CancellationToken ct = default)
+        => Send<AssetDto>(HttpMethod.Get, Query("api/v1/assets/bytag", new { tag }), ct: ct);
 
-    public async Task TransferAssetAsync(TransferAssetRequest req) => await SendNoContent(HttpMethod.Post, "api/v1/assets/transfer", req);
+    public Task TransferAssetAsync(TransferAssetRequest req, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Post, "api/v1/assets/transfer", req, ct);
 
 }

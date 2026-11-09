@@ -60,7 +60,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function fetchAssetInfo(tag) {
         fetch(`/Assets/GetAssetByTag?tag=${encodeURIComponent(tag)}`)
-            .then(res => res.json())
+            .then(async response => {
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || "Không thể tải thông tin thiết bị.");
+                return result;
+            })
             .then(data => {
                 if (data.success) {
                     document.getElementById("AssetId").value = data.item.id;
@@ -97,7 +101,11 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-            .then(res => res.json())
+            .then(async response => {
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || "Có lỗi xảy ra khi lưu.");
+                return result;
+            })
             .then(res => {
                 if (res.success) {
                     alert(newEmployeeSelect.dataset.transferSuccess);
@@ -105,7 +113,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else {
                     alert(res.message || "Có lỗi xảy ra khi lưu.");
                 }
-            });
+            })
+            .catch(err => alert(err.message || "Có lỗi xảy ra khi lưu."));
     });
 
 

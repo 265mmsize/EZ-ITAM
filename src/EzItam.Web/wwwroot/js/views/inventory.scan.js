@@ -24,7 +24,10 @@
 
     function fetchAssetInfo(tag) {
         fetch(`/Inventory/GetDetailByTag?inventoryId=${inventoryId}&tag=${encodeURIComponent(tag)}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error("Không thể tải thông tin thiết bị.");
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     document.getElementById("DetailId").value = data.item.id;
@@ -62,7 +65,7 @@
                 }
             })
             .catch(err => {
-                showAlert(err, "danger");
+                showAlert(err.message || "Không thể tải thông tin thiết bị.", "danger");
             });
     }
 
@@ -83,7 +86,11 @@
             },
             body: JSON.stringify(formData)
         })
-            .then(response => response.json())
+            .then(async response => {
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || "Lỗi khi lưu dữ liệu.");
+                return result;
+            })
             .then(res => {
                 if (res.success) {
                     showAlert(localizationCard.dataset.invSavesuccessfully, "success");
@@ -94,7 +101,8 @@
                 } else {
                     showAlert(res.message || "Lỗi khi lưu dữ liệu.", "danger");
                 }
-            });
+            })
+            .catch(err => showAlert(err.message || "Lỗi khi lưu dữ liệu.", "danger"));
     });
 
     function showAlert(message, type) {

@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\EzItam.Api\EzItam.Api.csproj" />
+    <ProjectReference Include="..\..\src\EzItam.Web\EzItam.Web.csproj" />
   </ItemGroup>
 
 </Project>
