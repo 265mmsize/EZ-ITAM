@@ -17,7 +17,7 @@ public class Employee
     public string Name { get; set; } = string.Empty;
 
     [EmailAddress(ErrorMessage = "올바른 이메일 형식이 아닙니다.")]
-    [StringLength(200)]
+    [StringLength(254)]
     [Display(Name = "이메일")]
     public string? Email { get; set; }
 
@@ -33,9 +33,14 @@ public class Employee
     [Display(Name = "재직")]
     public bool IsActive { get; set; } = true;
 
+    [StringLength(30)]
+    public string? Source { get; set; }
+
     public ICollection<Asset> Assets { get; set; } = new List<Asset>();
     public ICollection<AssetAssignment> Assignments { get; set; } = new List<AssetAssignment>();
     public ICollection<LicenseAssignment> LicenseAssignments { get; set; } = new List<LicenseAssignment>();
+    public ICollection<InventoryDetail> InventoryDetails { get; set; } = [];
+    public ICollection<InventoryDetail> InventoryDetailsIV { get; set; } = [];
 
     public string DisplayName => $"{Name} ({EmployeeNo})";
 }

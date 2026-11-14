@@ -9,7 +9,7 @@ public class EmployeesController : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<List<EmployeeDto>>> List([FromQuery] string? search, [FromQuery] int? departmentId, [FromQuery] bool includeInactive, CancellationToken ct)
     {
-        var q = _db.Employees.AsNoTracking().Include(e => e.Department).AsQueryable();
+        var q = _db.Employees.AsNoTracking().Include(e => e.Department).Include(e => e.Assets).ThenInclude(d=>d.Category).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
         {
             var s = search.Trim();
@@ -18,7 +18,7 @@ public class EmployeesController : ApiControllerBase
         if (departmentId.HasValue) q = q.Where(e => e.DepartmentId == departmentId);
         if (!includeInactive) q = q.Where(e => e.IsActive);
         var rows = await q.OrderBy(e => e.Department!.Name).ThenBy(e => e.Name).Take(1000).ToListAsync(ct);
-        return Ok(rows.Select(e => Map.ToDto(e)).ToList());
+        return Ok(rows.Select(e => Map.ToDto(e, true)).ToList());
     }
 
     [HttpGet("{id:int}")]

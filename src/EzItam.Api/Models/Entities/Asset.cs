@@ -45,7 +45,7 @@ public class Asset
     public DateTime? PurchaseDate { get; set; }
 
     [Display(Name = "구매가격")]
-    [Column(TypeName = "decimal(18,2)")]
+    [Column(TypeName = "decimal(14,2)")]
     [Range(0, 999999999999)]
     public decimal? PurchasePrice { get; set; }
 
@@ -61,7 +61,7 @@ public class Asset
     public int? CurrentEmployeeId { get; set; }
     public Employee? CurrentEmployee { get; set; }
 
-    [StringLength(100)]
+    [StringLength(64)]
     [Display(Name = "IP 주소")]
     public string? IpAddress { get; set; }
 
@@ -98,6 +98,8 @@ public class Asset
     public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
     public ICollection<LicenseAssignment> LicenseAssignments { get; set; } = new List<LicenseAssignment>();
     public ICollection<Agent> Agents { get; set; } = new List<Agent>();
+
+    public ICollection<InventoryDetail> InventoryDetails { get; set; } = [];
 
     [NotMapped]
     public bool IsWarrantyExpired => WarrantyExpiry.HasValue && WarrantyExpiry.Value.Date < DateTime.Today;

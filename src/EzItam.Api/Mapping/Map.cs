@@ -32,9 +32,9 @@ public static class Map
         };
         if (detail)
         {
-            dto.Assignments = a.Assignments.Select(ToDto).ToList();
-            dto.MaintenanceRecords = a.MaintenanceRecords.Select(ToDto).ToList();
-            dto.LicenseAssignments = a.LicenseAssignments.Select(ToDto).ToList();
+            dto.Assignments = [.. a.Assignments.Select(ToDto)];
+            dto.MaintenanceRecords = [.. a.MaintenanceRecords.Select(ToDto)];
+            dto.LicenseAssignments = [.. a.LicenseAssignments.Select(ToDto)];
         }
         return dto;
     }
@@ -69,7 +69,7 @@ public static class Map
             IsExpired = l.IsExpired, IsExpiringSoon = l.IsExpiringSoon,
             IsUnlimited = l.LicenseType is LicenseType.Site or LicenseType.Free
         };
-        if (detail) dto.Assignments = l.Assignments.OrderByDescending(a => a.AssignedAt).Select(ToDto).ToList();
+        if (detail) dto.Assignments = [.. l.Assignments.OrderByDescending(a => a.AssignedAt).Select(ToDto)];
         return dto;
     }
 
@@ -82,9 +82,9 @@ public static class Map
         };
         if (detail)
         {
-            dto.Assets = e.Assets.Select(a => ToDto(a)).ToList();
-            dto.Assignments = e.Assignments.OrderByDescending(a => a.AssignedAt).Select(ToDto).ToList();
-            dto.LicenseAssignments = e.LicenseAssignments.Select(ToDto).ToList();
+            dto.Assets = [.. e.Assets.Select(a => ToDto(a))];
+            dto.Assignments = [.. e.Assignments.OrderByDescending(a => a.AssignedAt).Select(ToDto)];
+            dto.LicenseAssignments = [.. e.LicenseAssignments.Select(ToDto)];
         }
         return dto;
     }
@@ -92,26 +92,26 @@ public static class Map
     public static DepartmentDto ToDto(Department d) => new()
     {
         Id = d.Id, Code = d.Code, Name = d.Name, IsActive = d.IsActive,
-        Employees = d.Employees.Select(ToRef).Where(x => x is not null).Select(x => x!).ToList()
+        Employees = [.. d.Employees.Select(ToRef).Where(x => x is not null).Select(x => x!)]
     };
 
     public static VendorDto ToDto(Vendor v) => new()
     {
         Id = v.Id, Name = v.Name, ContactName = v.ContactName, Phone = v.Phone, Email = v.Email, Notes = v.Notes,
-        Assets = v.Assets.Select(ToRef).Where(x => x is not null).Select(x => x!).ToList(),
-        Licenses = v.Licenses.Select(ToRef).Where(x => x is not null).Select(x => x!).ToList()
+        Assets = [.. v.Assets.Select(ToRef).Where(x => x is not null).Select(x => x!)],
+        Licenses = [.. v.Licenses.Select(ToRef).Where(x => x is not null).Select(x => x!)]
     };
 
     public static LocationDto ToDto(Location l) => new()
     {
         Id = l.Id, Name = l.Name, Building = l.Building, Floor = l.Floor, Room = l.Room, IsActive = l.IsActive, FullName = l.FullName,
-        Assets = l.Assets.Select(ToRef).Where(x => x is not null).Select(x => x!).ToList()
+        Assets = [.. l.Assets.Select(ToRef).Where(x => x is not null).Select(x => x!)]
     };
 
     public static CategoryDto ToDto(AssetCategory c) => new()
     {
         Id = c.Id, Code = c.Code, Name = c.Name, Description = c.Description, DepreciationMonths = c.DepreciationMonths,
-        Assets = c.Assets.Select(ToRef).Where(x => x is not null).Select(x => x!).ToList()
+        Assets = [.. c.Assets.Select(ToRef).Where(x => x is not null).Select(x => x!)]
     };
 
     public static AuditDto ToDto(AuditLog l) => new()
@@ -135,11 +135,7 @@ public static class Map
         };
         if (detail)
         {
-            dto.Software = a.Software.OrderBy(s => s.Name).Select(s => new AgentSoftwareDto
-            {
-                Id = s.Id, AgentId = s.AgentId, Name = s.Name, Publisher = s.Publisher, Version = s.Version,
-                InstallDate = s.InstallDate, Source = s.Source
-            }).ToList();
+            dto.Software = [.. a.Software.OrderBy(s => s.Name).Select(s => new AgentSoftwareDto { Id = s.Id, AgentId = s.AgentId, Name = s.Name, Publisher = s.Publisher, Version = s.Version, InstallDate = s.InstallDate, Source = s.Source })];
         }
         return dto;
     }

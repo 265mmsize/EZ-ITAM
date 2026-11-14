@@ -1,0 +1,157 @@
+﻿@model List<AssetLabelViewModel>
+@{
+    Layout = null;
+    ViewData["Title"] = "Print Asset Labels (50x50mm)";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        /* 1. Cấu hình tổng thể khổ giấy máy in là 80x60mm (Ngang 80mm, Dọc 60mm) */
+        @@page {
+            size: 80mm 60mm;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            font-family: Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+        }
+
+        /* 2. Vùng chứa tem: Đặt chiều rộng 80mm, canh lề trái (flex-start) để nội dung dồn sang trái */
+        .stamp-page {
+            width: 60mm;
+            height: 60mm;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Căn lề sang bên trái của khổ 80mm */
+            padding-left: 3mm; /* Khoảng cách lề trái tối thiểu để không bị dính sát mép mép cuộn giấy */
+            page-break-after: always;
+            page-break-inside: avoid;
+            background: #fff;
+        }
+
+        /* 3. Khung viền tem thực tế (Ví dụ giữ khung 48x48mm hoặc chỉnh thành kích thước bạn muốn) */
+        .stamp-sheet {
+            width: 56mm;
+            height: 56mm;
+            box-sizing: border-box;
+            padding: 2.5mm 3mm;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #fff;
+            border: 1.5px solid #000; /* Viền tem */
+        }
+
+        /* Các phần bên trong giữ nguyên */
+        .stamp-header {
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            border-bottom: 0.8px solid #000;
+            padding-bottom: 1mm;
+            padding-top: 0.5mm;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stamp-body {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-grow: 1;
+            margin-top: 1mm;
+        }
+
+        .stamp-codes img {
+            width: 60px !important;
+            height: 60px !important;
+            display: block;
+        }
+
+        .stamp-info {
+            width: 60%;
+            font-size: 7px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 80%;
+            padding-left: 1mm;
+        }
+
+            .stamp-info div {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+        .barcode-section {
+            text-align: center;
+            margin-top: 1mm;
+            margin-bottom: 0.5mm;
+        }
+
+        @@font-face {
+            font-family: 'Code39';
+            src: url('/fonts/Code39r.ttf') format('truetype');
+        }
+
+        .barcode-font {
+            font-family: 'Code39', sans-serif;
+            font-size: 32px;
+            line-height: 1;
+            letter-spacing: 1px;
+        }
+
+        @@media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print no-print-bar">
+        <button onclick="window.print();" style="padding: 6px 15px; margin-left:30px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ In ngay (Print)</button>
+        <div class="row" style="margin-top: 5px;margin-left:30px;">
+            <span style="font-size: 12px; color: #555;">(Kích thước: 56x56mm)</span>
+        </div>
+    </div>
+
+    @foreach (var asset in Model)
+    {
+        <div class="stamp-page">
+            <div class="stamp-sheet">
+                <div class="stamp-header">EVERPIA - IT ASSET</div>
+                
+                <div class="stamp-body">
+                    <div class="stamp-codes">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=@Uri.EscapeDataString(asset.AssetTag)" alt="QR Code" />
+                    </div>
+                    <div class="stamp-info">
+                        <div><strong>Tag:</strong> @asset.AssetTag</div>
+                        <div><strong>Name:</strong> @asset.AssetName</div>
+                        <div><strong>Serial:</strong> @asset.SerialNumber</div>
+                        <div><strong>Ip Adress:</strong> @asset.IpAddress</div>
+                    </div>
+                </div>
+                <div class="barcode-section">
+                    <div class="barcode-font">@asset.AssetTag</div>
+                    <div style="font-size: 8px; font-family: Arial, sans-serif; margin-top: 2px;">@asset.AssetTag</div>
+                </div>
+            </div>
+        </div>
+    }
+</body>
+</html>

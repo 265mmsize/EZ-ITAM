@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace EzItam.Web.Controllers;
 
-public class AssetsController : BaseController
+public class AssetsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : BaseController(api, loc)
 {
-    public AssetsController(ItamApiClient api, IStringLocalizer<SharedResource> loc) : base(api, loc) { }
-
     public async Task<IActionResult> Index(AssetFilter filter)
     {
         var result = await Api.SearchAssetsAsync(filter);
@@ -208,8 +206,62 @@ public class AssetsController : BaseController
         return View(model);
     }
 
-    private List<SelectListItem> CheckInStatuses()
-        => EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString()).ToList();
+    [HttpGet]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> PrintLabels(string ids)
+    {
+        if (string.IsNullOrEmpty(ids))
+        {
+            return BadRequest();
+        }
+        var res = await Api.ListAssetLabelAsync(ids);
+
+        return View(nameof(PrintLabels), res);
+    }
+
+    public async Task<IActionResult> Mobile()
+    {
+        SetViewBagStatus();
+        ViewBag.LocationList = await OptionsAsync("locations");
+        ViewBag.EmployeeList = await OptionsAsync("employees");
+        return View();
+    }
+
+    public async Task<IActionResult> GetAssetByTag(string tag, CancellationToken ct)
+    {
+        try
+        {
+            var asset = await Api.GetAssetByTagAsync(tag, ct);
+            return Ok(new { success = true, item = asset });
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return Ok(new { success = false, message = L["assets.scan.notfound"].Value });
+        }
+        catch (ApiException ex)
+        {
+            return StatusCode((int)ex.StatusCode, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> TransferAsset(TransferAssetRequest request, CancellationToken ct)
+    {
+        try
+        {
+            await Api.TransferAssetAsync(request, ct);
+            return Ok(new { success = true});
+        }
+        catch (ApiException ex)
+        {
+            return StatusCode((int)ex.StatusCode, new { success = false, message = ex.Message });
+        }
+    }
+
+
+
+    private static List<SelectListItem> CheckInStatuses()
+        => [.. EnumSelectList<AssetStatus>().Where(s => s.Value != AssetStatus.Assigned.ToString())];
 
     private async Task PopulateFormListsAsync(AssetDto asset)
     {
@@ -217,5 +269,20 @@ public class AssetsController : BaseController
         ViewBag.Locations = await OptionsAsync("locations", asset.LocationId?.ToString());
         ViewBag.Vendors = await OptionsAsync("vendors", asset.VendorId?.ToString());
         ViewBag.Employees = await OptionsAsync("employees", asset.CurrentEmployeeId?.ToString());
+    }
+
+    public void SetViewBagStatus(string? selectedValue = null)
+    {
+        var selectList = Enum.GetValues(typeof(AssetStatus))
+            .Cast<AssetStatus>()
+            .Select(status => new SelectListItem
+            {
+                Value = ((int)status).ToString(),
+                Text = status.ToString(),
+                Selected = selectedValue != null && ((int)status).ToString() == selectedValue
+            })
+            .ToList();
+
+        ViewBag.StatusList = selectList;
     }
 }

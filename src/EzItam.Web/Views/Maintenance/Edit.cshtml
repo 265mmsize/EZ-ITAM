@@ -1,23 +1,30 @@
 @model MaintenanceDto
-@{ ViewData["Title"] = L["유지보수 수정"]; AssetDto asset = ViewBag.Asset; var isAdmin = User.IsInRole("Admin"); }
+@{
+	ViewData["Title"] = L["유지보수 수정"]; AssetDto asset = ViewBag.Asset; var isAdmin = User.IsInRole("Admin");
+}
 <partial name="_PageHeader" model="@(L["유지보수 수정 - {0} {1}", asset.AssetTag, asset.Name].Value)" />
-<div class="card" style="max-width:640px"><div class="card-body">
-    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-once>
-        <partial name="_Form" model="Model" />
-        @if (asset.Status == AssetStatus.InRepair)
-        {
-            <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="restoreToStock" name="restoreToStock" value="true" checked />
-                <label class="form-check-label" for="restoreToStock">@L["완료 처리 시 자산 상태를 '재고'로 복원"]</label>
-            </div>
-        }
-        <button type="submit" class="btn btn-primary">@L["저장"]</button>
-        <a class="btn btn-outline-secondary" asp-controller="Assets" asp-action="Details" asp-route-id="@asset.Id">@L["취소"]</a>
-    </form>
-    @if (isAdmin)
-    {
-        <hr />
-        <partial name="_ConfirmDelete" model="@(("Maintenance", (object)Model.Id, L["유지보수 이력"]))" />
-    }
-</div></div>
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+<div class="card" style="max-width:640px">
+	<div class="card-body">
+		<form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-once>
+			<partial name="_Form" model="Model" />
+			@if (asset.Status == AssetStatus.InRepair)
+			{
+				<div class="form-check mb-3">
+					<input type="checkbox" class="form-check-input" id="restoreToStock" name="restoreToStock" value="true" checked />
+					<label class="form-check-label" for="restoreToStock">@L["완료 처리 시 자산 상태를 '재고'로 복원"]</label>
+				</div>
+			}
+			<button type="submit" class="btn btn-primary">@L["저장"]</button>
+			<a class="btn btn-outline-secondary" asp-controller="Assets" asp-action="Details" asp-route-id="@asset.Id">@L["취소"]</a>
+		</form>
+		@if (isAdmin)
+		{
+			<hr />
+			//Fix bug: Map type L["유지보수 이력"] to string
+			<partial name="_ConfirmDelete" model="@(("Maintenance", (object)Model.Id, L["유지보수 이력"].Value.ToString()))" />
+		}
+	</div>
+</div>
+@section Scripts {
+	<partial name="_ValidationScriptsPartial" />
+}

@@ -52,8 +52,8 @@ public class LicenseService : ILicenseService
 
     public async Task<LicenseAssignment> AssignAsync(int licenseId, int? employeeId, int? assetId, string? notes, CancellationToken ct = default)
     {
-        if (employeeId is null && assetId is null)
-            throw new DomainException("사용자 또는 장비 중 하나는 반드시 지정해야 합니다.");
+        if (employeeId.HasValue == assetId.HasValue)
+            throw new DomainException("사용자 또는 장비 중 하나만 지정해야 합니다.");
 
         var license = await _db.SoftwareLicenses
             .Include(l => l.Assignments)

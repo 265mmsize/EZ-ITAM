@@ -1,8 +1,9 @@
+using EzItam.Web.ViewModels;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace EzItam.Web.Api;
 
@@ -15,38 +16,50 @@ public sealed class ItamApiClient
     public ItamApiClient(HttpClient http) => _http = http;
 
     // ---------- 공통 ----------
-    private async Task<T> Send<T>(HttpMethod method, string path, object? body = null)
+    private async Task<T> Send<T>(HttpMethod method, string path, object? body = null, CancellationToken ct = default)
     {
-        using var resp = await SendRaw(method, path, body);
-        return (await resp.Content.ReadFromJsonAsync<T>(Json)) ?? throw new ApiException(HttpStatusCode.InternalServerError, "빈 응답");
+        using var resp = await SendRaw(method, path, body, ct);
+        return (await resp.Content.ReadFromJsonAsync<T>(Json, ct)) ?? throw new ApiException(HttpStatusCode.InternalServerError, "빈 응답");
     }
 
-    private async Task SendNoContent(HttpMethod method, string path, object? body = null)
+    private async Task SendNoContent(HttpMethod method, string path, object? body = null, CancellationToken ct = default)
     {
-        using var resp = await SendRaw(method, path, body);
+        using var resp = await SendRaw(method, path, body, ct);
     }
 
-    private async Task<HttpResponseMessage> SendRaw(HttpMethod method, string path, object? body)
+    private async Task<HttpResponseMessage> SendRaw(HttpMethod method, string path, object? body, CancellationToken ct = default)
     {
         using var req = new HttpRequestMessage(method, path);
         if (body is not null) req.Content = JsonContent.Create(body, options: Json);
-        var resp = await _http.SendAsync(req);
+        var resp = await _http.SendAsync(req, ct);
         if (resp.IsSuccessStatusCode) return resp;
 
         var message = "요청을 처리하지 못했습니다.";
-        try
-        {
-            var err = await resp.Content.ReadFromJsonAsync<ApiErrorBody>(Json);
-            if (!string.IsNullOrWhiteSpace(err?.Message)) message = err.Message!;
-        }
-        catch (JsonException) { }
+        message = await ReadErrorMessage(resp.Content, message);
         resp.Dispose();
         throw new ApiException(resp.StatusCode, message);
+    }
+
+    private static async Task<string> ReadErrorMessage(HttpContent content, string fallback)
+    {
+        try
+        {
+            var error = await content.ReadFromJsonAsync<ApiErrorBody>(Json);
+            var message = error?.Message ?? error?.Error ?? error?.Detail ?? error?.Title;
+            return string.IsNullOrWhiteSpace(message) ? fallback : message;
+        }
+        catch (JsonException)
+        {
+            return fallback;
+        }
     }
 
     private sealed class ApiErrorBody
     {
         public string? Message { get; set; }
+        public string? Error { get; set; }
+        public string? Detail { get; set; }
+        public string? Title { get; set; }
     }
 
     /// <summary>객체의 값이 있는 속성만 쿼리 문자열로 만듭니다.</summary>
@@ -74,8 +87,8 @@ public sealed class ItamApiClient
         using var resp = await _http.SendAsync(anon);
         if (!resp.IsSuccessStatusCode)
         {
-            var err = await resp.Content.ReadFromJsonAsync<ApiErrorBody>(Json);
-            throw new ApiException(resp.StatusCode, err?.Message ?? "로그인에 실패했습니다.");
+            var message = await ReadErrorMessage(resp.Content, "로그인에 실패했습니다.");
+            throw new ApiException(resp.StatusCode, message);
         }
         return (await resp.Content.ReadFromJsonAsync<TokenResponse>(Json))!;
     }
@@ -150,4 +163,45 @@ public sealed class ItamApiClient
 
     // ---------- 대시보드 ----------
     public Task<DashboardDto> DashboardAsync() => Send<DashboardDto>(HttpMethod.Get, "api/v1/dashboard");
+
+    public async Task<List<AssetLabelViewModel>> ListAssetLabelAsync(string ids)
+    {
+        var fromQuery = Query("api/v1/assets/labels", new { ids });
+        return await Send<List<AssetLabelViewModel>>(HttpMethod.Get, fromQuery);
+    }
+
+    public Task<List<InventoryDto>> ListInventoryAsync(CancellationToken ct = default)
+        => Send<List<InventoryDto>>(HttpMethod.Get, "api/v1/inventories", ct: ct);
+    public Task<InventoryDto> GetInventoryByIdAsync(int id, CancellationToken ct = default)
+        => Send<InventoryDto>(HttpMethod.Get, $"api/v1/inventories/{id}", ct: ct);
+    public Task<InventoryDto> CreateInventoryAsync(InventoryDto dto, CancellationToken ct = default)
+        => Send<InventoryDto>(HttpMethod.Post, "api/v1/inventories", dto, ct);
+    public Task UpdateInventoryAsync(int id, InventoryDto dto, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Put, $"api/v1/inventories/{id}", dto, ct);
+    public Task DeleteInventoryAsync(int id, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Delete, $"api/v1/inventories/{id}", ct: ct);
+    public Task GenInventoryBookAsync(int id, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Post, $"api/v1/inventories/{id}/genbook", ct: ct);
+    public Task<InventoryDetailResponseDto> GetInventoryDetailByInventoryIdAsync(int id, CancellationToken ct = default)
+        => Send<InventoryDetailResponseDto>(HttpMethod.Get, $"api/v1/inventories/{id}/details", ct: ct);
+    public async Task<InventoryDetailDto?> GetAssetByInventoryIdAndTag(int id, string tag, CancellationToken ct = default)
+    {
+        var fromQuery = Query($"api/v1/inventories/{id}/asset", new { tag });
+        return await Send<InventoryDetailDto?>(HttpMethod.Get, fromQuery, ct: ct);
+    }
+
+    public Task<bool> PostScanResult(ScanResultRequest req, CancellationToken ct = default)
+        => Send<bool>(HttpMethod.Post, "api/v1/inventories/scan", req, ct);
+    public Task PostDiff(int id, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Post, $"api/v1/inventories/postdiff/{id}", ct: ct);
+
+
+    public async Task<List<HrEmployeeDto>> GetListEmployeesByOrgCode(string orgCode) => await Send<List<HrEmployeeDto>>(HttpMethod.Get, $"api/v1/external/hr/employees?orgCode={orgCode}");
+
+    public Task<AssetDto> GetAssetByTagAsync(string tag, CancellationToken ct = default)
+        => Send<AssetDto>(HttpMethod.Get, Query("api/v1/assets/bytag", new { tag }), ct: ct);
+
+    public Task TransferAssetAsync(TransferAssetRequest req, CancellationToken ct = default)
+        => SendNoContent(HttpMethod.Post, "api/v1/assets/transfer", req, ct);
+
 }
