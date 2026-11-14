@@ -39,12 +39,28 @@ public class AppDbContext : IdentityDbContext
     {
         base.OnModelCreating(builder);
 
+        if (Database.IsSqlServer())
+        {
+            builder.Entity<Asset>().Property(a => a.PurchaseDate).HasColumnType("date");
+            builder.Entity<Asset>().Property(a => a.WarrantyExpiry).HasColumnType("date");
+            builder.Entity<MaintenanceRecord>().Property(m => m.Date).HasColumnType("date");
+            builder.Entity<MaintenanceRecord>().Property(m => m.CompletedAt).HasColumnType("date");
+            builder.Entity<SoftwareLicense>().Property(l => l.PurchaseDate).HasColumnType("date");
+            builder.Entity<SoftwareLicense>().Property(l => l.ExpiryDate).HasColumnType("date");
+            builder.Entity<Agent>().Property(a => a.TokenHash).HasColumnType("char(64)");
+        }
+
         builder.Entity<Asset>(e =>
         {
-            e.ToTable("Assets");
+            e.ToTable("Assets", table =>
+            {
+                table.HasCheckConstraint("CK_Assets_Status", "[Status] IN (0, 1, 2, 3, 4, 5, 6)");
+                table.HasCheckConstraint("CK_Assets_PurchasePrice_NonNegative", "[PurchasePrice] IS NULL OR [PurchasePrice] BETWEEN 0 AND 999999999999");
+            });
             e.HasIndex(a => a.AssetTag).IsUnique();
             e.HasIndex(a => a.SerialNumber);
             e.HasIndex(a => a.Status);
+            e.Property(a => a.Status).HasDefaultValue(AssetStatus.InStock);
             e.HasOne(a => a.Category).WithMany(c => c.Assets).HasForeignKey(a => a.CategoryId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(a => a.Vendor).WithMany(v => v.Assets).HasForeignKey(a => a.VendorId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(a => a.Location).WithMany(l => l.Assets).HasForeignKey(a => a.LocationId).OnDelete(DeleteBehavior.SetNull);
@@ -53,22 +69,30 @@ public class AppDbContext : IdentityDbContext
 
         builder.Entity<AssetCategory>(e =>
         {
-            e.ToTable("AssetCategories");
+            e.ToTable("AssetCategories", table =>
+                table.HasCheckConstraint("CK_AssetCategories_DepreciationMonths", "[DepreciationMonths] BETWEEN 0 AND 600"));
             e.HasIndex(c => c.Code).IsUnique();
+            e.Property(c => c.DepreciationMonths).HasDefaultValue(48);
         });
 
-        builder.Entity<Location>(e => e.ToTable("Locations"));
+        builder.Entity<Location>(e =>
+        {
+            e.ToTable("Locations");
+            e.Property(l => l.IsActive).HasDefaultValue(true);
+        });
 
         builder.Entity<Department>(e =>
         {
             e.ToTable("Departments");
             e.HasIndex(d => d.Code).IsUnique();
+            e.Property(d => d.IsActive).HasDefaultValue(true);
         });
 
         builder.Entity<Employee>(e =>
         {
             e.ToTable("Employees");
             e.HasIndex(emp => emp.EmployeeNo).IsUnique();
+            e.Property(emp => emp.IsActive).HasDefaultValue(true);
             e.HasOne(emp => emp.Department).WithMany(d => d.Employees).HasForeignKey(emp => emp.DepartmentId).OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -78,28 +102,57 @@ public class AppDbContext : IdentityDbContext
         {
             e.ToTable("AssetAssignments");
             e.HasIndex(a => new { a.AssetId, a.ReturnedAt });
+            e.HasIndex(a => a.AssetId)
+                .IsUnique()
+                .HasDatabaseName("UX_AssetAssignments_AssetId_Open")
+                .HasFilter("[ReturnedAt] IS NULL");
             e.HasOne(a => a.Asset).WithMany(a => a.Assignments).HasForeignKey(a => a.AssetId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Employee).WithMany(emp => emp.Assignments).HasForeignKey(a => a.EmployeeId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<MaintenanceRecord>(e =>
         {
-            e.ToTable("MaintenanceRecords");
+            e.ToTable("MaintenanceRecords", table =>
+            {
+                table.HasCheckConstraint("CK_MaintenanceRecords_Type", "[Type] IN (0, 1, 2, 3)");
+                table.HasCheckConstraint("CK_MaintenanceRecords_Cost_NonNegative", "[Cost] IS NULL OR [Cost] BETWEEN 0 AND 999999999999");
+            });
+            e.HasIndex(m => new { m.Date, m.Id })
+                .HasDatabaseName("IX_MaintenanceRecords_Open_Date_Id")
+                .HasFilter("[CompletedAt] IS NULL");
             e.HasOne(m => m.Asset).WithMany(a => a.MaintenanceRecords).HasForeignKey(m => m.AssetId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(m => m.Vendor).WithMany().HasForeignKey(m => m.VendorId).OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<SoftwareLicense>(e =>
         {
-            e.ToTable("SoftwareLicenses");
+            e.ToTable("SoftwareLicenses", table =>
+            {
+                table.HasCheckConstraint("CK_SoftwareLicenses_LicenseType", "[LicenseType] IN (0, 1, 2, 3, 4)");
+                table.HasCheckConstraint("CK_SoftwareLicenses_TotalSeats", "[TotalSeats] BETWEEN 0 AND 1000000");
+                table.HasCheckConstraint("CK_SoftwareLicenses_Cost_NonNegative", "[Cost] IS NULL OR [Cost] BETWEEN 0 AND 999999999999");
+            });
             e.HasIndex(l => l.Name);
+            e.Property(l => l.LicenseType).HasDefaultValue(LicenseType.PerSeat);
+            e.Property(l => l.TotalSeats).HasDefaultValue(1);
             e.HasOne(l => l.Vendor).WithMany(v => v.Licenses).HasForeignKey(l => l.VendorId).OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<LicenseAssignment>(e =>
         {
-            e.ToTable("LicenseAssignments");
+            e.ToTable("LicenseAssignments", table =>
+                table.HasCheckConstraint(
+                    "CK_LicenseAssignments_ExactlyOneAssignee",
+                    "([AssetId] IS NOT NULL AND [EmployeeId] IS NULL) OR ([AssetId] IS NULL AND [EmployeeId] IS NOT NULL)"));
             e.HasIndex(a => new { a.SoftwareLicenseId, a.ReleasedAt });
+            e.HasIndex(a => new { a.SoftwareLicenseId, a.EmployeeId })
+                .IsUnique()
+                .HasDatabaseName("UX_LicenseAssignments_Open_Employee")
+                .HasFilter("[ReleasedAt] IS NULL AND [EmployeeId] IS NOT NULL");
+            e.HasIndex(a => new { a.SoftwareLicenseId, a.AssetId })
+                .IsUnique()
+                .HasDatabaseName("UX_LicenseAssignments_Open_Asset")
+                .HasFilter("[ReleasedAt] IS NULL AND [AssetId] IS NOT NULL");
             e.HasOne(a => a.SoftwareLicense).WithMany(l => l.Assignments).HasForeignKey(a => a.SoftwareLicenseId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Asset).WithMany(a => a.LicenseAssignments).HasForeignKey(a => a.AssetId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Employee).WithMany(emp => emp.LicenseAssignments).HasForeignKey(a => a.EmployeeId).OnDelete(DeleteBehavior.Cascade);
@@ -107,11 +160,19 @@ public class AppDbContext : IdentityDbContext
 
         builder.Entity<Agent>(e =>
         {
-            e.ToTable("Agents");
+            e.ToTable("Agents", table =>
+            {
+                table.HasCheckConstraint("CK_Agents_Status", "[Status] IN (0, 1, 2)");
+                table.HasCheckConstraint("CK_Agents_Ring", "[Ring] IN (0, 1)");
+                table.HasCheckConstraint("CK_Agents_NonNegativeHardware", "([CpuCores] IS NULL OR [CpuCores] >= 0) AND ([TotalMemoryMb] IS NULL OR [TotalMemoryMb] >= 0) AND ([DiskTotalGb] IS NULL OR [DiskTotalGb] >= 0)");
+            });
             e.HasIndex(a => a.DeviceUuid).IsUnique();
             e.HasIndex(a => a.SerialNumber);
             e.HasIndex(a => a.HostName);
-            e.HasIndex(a => a.TokenHash);
+            e.HasIndex(a => a.TokenHash).IsUnique();
+            e.HasIndex(a => a.LastSeenAt);
+            e.Property(a => a.Status).HasDefaultValue(AgentStatus.Pending);
+            e.Property(a => a.Ring).HasDefaultValue(AgentRing.Stable);
             e.HasOne(a => a.Asset).WithMany(x => x.Agents).HasForeignKey(a => a.AssetId).OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -124,16 +185,25 @@ public class AppDbContext : IdentityDbContext
 
         builder.Entity<AuditLog>(e =>
         {
-            e.ToTable("AuditLogs");
-            e.HasIndex(a => new { a.EntityName, a.EntityKey });
+            e.ToTable("AuditLogs", table =>
+                table.HasCheckConstraint("CK_AuditLogs_Action", "[Action] IN (0, 1, 2)"));
+            e.HasIndex(a => new { a.EntityName, a.EntityKey, a.Timestamp })
+                .HasDatabaseName("IX_AuditLogs_EntityName_EntityKey_Timestamp");
             e.HasIndex(a => a.Timestamp);
         });
 
         builder.Entity<Inventory>(e =>
         {
-            e.ToTable("Inventories");
+            e.ToTable("Inventories", table =>
+            {
+                table.HasCheckConstraint("CK_Inventories_Status", "[InventoryStatus] IN (1, 2, 3)");
+                table.HasCheckConstraint("CK_Inventories_DateRange", "[DateFrom] <= [DateTo]");
+            });
             e.Property(i => i.Name).IsRequired().HasMaxLength(50);
             e.Property(i => i.InventoryStatus).IsRequired().HasConversion<int>();
+            e.Property(i => i.InventoryStatus)
+                .HasDefaultValue(InventoryStatus.Open)
+                .HasSentinel(InventoryStatus.Open);
             e.HasIndex(i => i.Name).IsUnique();
             e.Property(i => i.DateFrom).IsRequired();
             e.Property(i => i.DateTo).IsRequired();
@@ -142,7 +212,12 @@ public class AppDbContext : IdentityDbContext
 
         builder.Entity<InventoryDetail>(e =>
         {
-            e.ToTable("InventoryDetails");
+            e.ToTable("InventoryDetails", table =>
+            {
+                table.HasCheckConstraint("CK_InventoryDetails_Status", "[Status] IN (0, 1, 2, 3, 4, 5, 6)");
+                table.HasCheckConstraint("CK_InventoryDetails_AssetStatusIV", "[AssetStatusIV] IN (0, 1, 2, 3, 4, 5, 6)");
+                table.HasCheckConstraint("CK_InventoryDetails_ScanCount", "[ScanCount] >= 0");
+            });
             e.HasOne(d => d.Inventory).WithMany(i => i.InventoryDetails).HasForeignKey(d => d.InventoryId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(d => d.Asset).WithMany(a => a.InventoryDetails).HasForeignKey(d => d.IdAsset).OnDelete(DeleteBehavior.Cascade);
             e.Property(d => d.IdLocation).IsRequired(false);
@@ -165,7 +240,8 @@ public class AppDbContext : IdentityDbContext
         });
         builder.Entity<EmployeeTemp>(e =>
         {
-            e.ToTable("EmployeeTemps");
+            e.ToTable("EmployeeTemps", table =>
+                table.HasCheckConstraint("CK_EmployeeTemps_IsResigned", "[IsResigned] IN ('Y', 'N')"));
             e.Property(d => d.Id);
             e.Property(d => d.OrgCode).IsRequired(true);
             e.Property(d => d.EmployeeNo).IsRequired(true);
@@ -178,7 +254,7 @@ public class AppDbContext : IdentityDbContext
             e.Property(d => d.TitleName).IsRequired(false);
             e.Property(d => d.PositionCode).IsRequired(false);
             e.Property(d => d.PositionName).IsRequired(false);
-            e.Property(d => d.IsResigned).IsRequired(false);
+            e.Property(d => d.IsResigned).IsRequired().HasDefaultValue("N");
             e.Property(d => d.DateValue1).IsRequired(false);
             e.Property(d => d.DateValue2).IsRequired(false);
             e.Property(d => d.DateValue3).IsRequired(false);

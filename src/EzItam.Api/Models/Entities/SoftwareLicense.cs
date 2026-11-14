@@ -44,7 +44,7 @@ public class SoftwareLicense
     public Vendor? Vendor { get; set; }
 
     [Display(Name = "구매비용")]
-    [Column(TypeName = "decimal(18,2)")]
+    [Column(TypeName = "decimal(14,2)")]
     [Range(0, 999999999999)]
     public decimal? Cost { get; set; }
 

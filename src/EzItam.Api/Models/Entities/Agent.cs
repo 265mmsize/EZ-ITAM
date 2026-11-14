@@ -28,7 +28,7 @@ public class Agent
     [StringLength(20)] public string? OsBuild { get; set; }
     [StringLength(100)] public string? LoggedOnUser { get; set; }
     [StringLength(300)] public string? MacAddresses { get; set; }
-    [StringLength(100)] public string? IpAddress { get; set; }
+    [StringLength(64)] public string? IpAddress { get; set; }
     public bool? BitLockerOn { get; set; }
     public long? DiskTotalGb { get; set; }
 

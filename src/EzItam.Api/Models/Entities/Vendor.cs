@@ -20,7 +20,7 @@ public class Vendor
     public string? Phone { get; set; }
 
     [EmailAddress(ErrorMessage = "올바른 이메일 형식이 아닙니다.")]
-    [StringLength(200)]
+    [StringLength(254)]
     [Display(Name = "이메일")]
     public string? Email { get; set; }
 

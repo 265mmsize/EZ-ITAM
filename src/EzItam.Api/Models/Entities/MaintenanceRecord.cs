@@ -24,7 +24,7 @@ public class MaintenanceRecord
     public string Description { get; set; } = string.Empty;
 
     [Display(Name = "비용")]
-    [Column(TypeName = "decimal(18,2)")]
+    [Column(TypeName = "decimal(14,2)")]
     [Range(0, 999999999999)]
     public decimal? Cost { get; set; }
 

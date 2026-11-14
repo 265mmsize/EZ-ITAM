@@ -68,8 +68,8 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("IpAddress")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<DateTime?>("LastInventoryAt")
                         .HasColumnType("datetime2");
@@ -109,18 +109,22 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<int>("Ring")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("TokenHash")
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("char(64)");
 
                     b.Property<long?>("TotalMemoryMb")
                         .HasColumnType("bigint");
@@ -134,11 +138,22 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("HostName");
 
+                    b.HasIndex("LastSeenAt");
+
                     b.HasIndex("SerialNumber");
 
-                    b.HasIndex("TokenHash");
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasFilter("[TokenHash] IS NOT NULL");
 
-                    b.ToTable("Agents", (string)null);
+                    b.ToTable("Agents", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Agents_NonNegativeHardware", "([CpuCores] IS NULL OR [CpuCores] >= 0) AND ([TotalMemoryMb] IS NULL OR [TotalMemoryMb] >= 0) AND ([DiskTotalGb] IS NULL OR [DiskTotalGb] >= 0)");
+
+                            t.HasCheckConstraint("CK_Agents_Ring", "[Ring] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_Agents_Status", "[Status] IN (0, 1, 2)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.AgentSoftware", b =>
@@ -212,8 +227,8 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("IpAddress")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
@@ -244,17 +259,19 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("PurchaseDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<decimal?>("PurchasePrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(14,2)");
 
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -267,7 +284,7 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("WarrantyExpiry")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
@@ -286,7 +303,12 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("Assets", (string)null);
+                    b.ToTable("Assets", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Assets_PurchasePrice_NonNegative", "[PurchasePrice] IS NULL OR [PurchasePrice] BETWEEN 0 AND 999999999999");
+
+                            t.HasCheckConstraint("CK_Assets_Status", "[Status] IN (0, 1, 2, 3, 4, 5, 6)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.AssetAssignment", b =>
@@ -323,6 +345,11 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AssetId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AssetAssignments_AssetId_Open")
+                        .HasFilter("[ReturnedAt] IS NULL");
+
                     b.HasIndex("EmployeeId");
 
                     b.HasIndex("AssetId", "ReturnedAt");
@@ -344,7 +371,9 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("DepreciationMonths")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(48);
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -360,7 +389,10 @@ namespace EzItam.Api.Data.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("AssetCategories", (string)null);
+                    b.ToTable("AssetCategories", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AssetCategories_DepreciationMonths", "[DepreciationMonths] BETWEEN 0 AND 600");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.AuditLog", b =>
@@ -398,9 +430,13 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("Timestamp");
 
-                    b.HasIndex("EntityName", "EntityKey");
+                    b.HasIndex("EntityName", "EntityKey", "Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_EntityName_EntityKey_Timestamp");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AuditLogs_Action", "[Action] IN (0, 1, 2)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.Department", b =>
@@ -417,7 +453,9 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -444,8 +482,8 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
 
                     b.Property<string>("EmployeeNo")
                         .IsRequired()
@@ -453,7 +491,9 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -535,8 +575,8 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
 
                     b.Property<string>("EmployeeNo")
                         .IsRequired()
@@ -544,8 +584,11 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("IsResigned")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)");
+                        .HasColumnType("nvarchar(1)")
+                        .HasDefaultValue("N");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -578,7 +621,10 @@ namespace EzItam.Api.Data.Migrations
                     b.HasIndex("OrgCode", "EmployeeNo")
                         .IsUnique();
 
-                    b.ToTable("EmployeeTemps", (string)null);
+                    b.ToTable("EmployeeTemps", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EmployeeTemps_IsResigned", "[IsResigned] IN ('Y', 'N')");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.Inventory", b =>
@@ -596,7 +642,9 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("date");
 
                     b.Property<int>("InventoryStatus")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -612,7 +660,12 @@ namespace EzItam.Api.Data.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Inventories", (string)null);
+                    b.ToTable("Inventories", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Inventories_DateRange", "[DateFrom] <= [DateTo]");
+
+                            t.HasCheckConstraint("CK_Inventories_Status", "[InventoryStatus] IN (1, 2, 3)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.InventoryDetail", b =>
@@ -679,7 +732,14 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("InventoryId", "ScanCount");
 
-                    b.ToTable("InventoryDetails", (string)null);
+                    b.ToTable("InventoryDetails", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_InventoryDetails_AssetStatusIV", "[AssetStatusIV] IN (0, 1, 2, 3, 4, 5, 6)");
+
+                            t.HasCheckConstraint("CK_InventoryDetails_ScanCount", "[ScanCount] >= 0");
+
+                            t.HasCheckConstraint("CK_InventoryDetails_Status", "[Status] IN (0, 1, 2, 3, 4, 5, 6)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.LicenseAssignment", b =>
@@ -719,9 +779,22 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("EmployeeId");
 
+                    b.HasIndex("SoftwareLicenseId", "AssetId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LicenseAssignments_Open_Asset")
+                        .HasFilter("[ReleasedAt] IS NULL AND [AssetId] IS NOT NULL");
+
+                    b.HasIndex("SoftwareLicenseId", "EmployeeId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LicenseAssignments_Open_Employee")
+                        .HasFilter("[ReleasedAt] IS NULL AND [EmployeeId] IS NOT NULL");
+
                     b.HasIndex("SoftwareLicenseId", "ReleasedAt");
 
-                    b.ToTable("LicenseAssignments", (string)null);
+                    b.ToTable("LicenseAssignments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_LicenseAssignments_ExactlyOneAssignee", "([AssetId] IS NOT NULL AND [EmployeeId] IS NULL) OR ([AssetId] IS NULL AND [EmployeeId] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.Location", b =>
@@ -741,7 +814,9 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -769,17 +844,17 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<decimal?>("Cost")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(14,2)");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -798,7 +873,16 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("MaintenanceRecords", (string)null);
+                    b.HasIndex("Date", "Id")
+                        .HasDatabaseName("IX_MaintenanceRecords_Open_Date_Id")
+                        .HasFilter("[CompletedAt] IS NULL");
+
+                    b.ToTable("MaintenanceRecords", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MaintenanceRecords_Cost_NonNegative", "[Cost] IS NULL OR [Cost] BETWEEN 0 AND 999999999999");
+
+                            t.HasCheckConstraint("CK_MaintenanceRecords_Type", "[Type] IN (0, 1, 2, 3)");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.SoftwareLicense", b =>
@@ -810,20 +894,22 @@ namespace EzItam.Api.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal?>("Cost")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(14,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<string>("LicenseKey")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("LicenseType")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -839,10 +925,12 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("PurchaseDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<int>("TotalSeats")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -860,7 +948,14 @@ namespace EzItam.Api.Data.Migrations
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("SoftwareLicenses", (string)null);
+                    b.ToTable("SoftwareLicenses", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SoftwareLicenses_Cost_NonNegative", "[Cost] IS NULL OR [Cost] BETWEEN 0 AND 999999999999");
+
+                            t.HasCheckConstraint("CK_SoftwareLicenses_LicenseType", "[LicenseType] IN (0, 1, 2, 3, 4)");
+
+                            t.HasCheckConstraint("CK_SoftwareLicenses_TotalSeats", "[TotalSeats] BETWEEN 0 AND 1000000");
+                        });
                 });
 
             modelBuilder.Entity("EzItam.Api.Models.Entities.Vendor", b =>
@@ -876,8 +971,8 @@ namespace EzItam.Api.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
 
                     b.Property<string>("Name")
                         .IsRequired()

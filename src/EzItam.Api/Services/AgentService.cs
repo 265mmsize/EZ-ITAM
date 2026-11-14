@@ -78,7 +78,7 @@ public class AgentService : IAgentService
         agent.AgentVersion = Truncate(req.AgentVersion, 32) ?? string.Empty;
         agent.BootTimeUtc = req.BootTimeUtc;
         agent.RebootPending = req.RebootPending;
-        if (!string.IsNullOrWhiteSpace(req.IpAddress)) agent.IpAddress = Truncate(req.IpAddress, 100);
+        if (!string.IsNullOrWhiteSpace(req.IpAddress)) agent.IpAddress = Truncate(req.IpAddress, 64);
         await _db.SaveChangesAsync(ct);
 
         var inventoryDue = agent.Status == AgentStatus.Approved
@@ -115,7 +115,7 @@ public class AgentService : IAgentService
         agent.OsBuild = Truncate(hw.OsBuild, 20);
         agent.LoggedOnUser = Truncate(hw.LoggedOnUser, 100);
         agent.MacAddresses = JoinMacs(hw.MacAddresses);
-        agent.IpAddress = Truncate(hw.IpAddress, 100);
+        agent.IpAddress = Truncate(hw.IpAddress, 64);
         agent.BitLockerOn = hw.BitLockerOn;
         agent.DiskTotalGb = hw.DiskTotalGb;
         // 클라이언트 시계 오차에 영향받지 않도록 서버 시각을 기록합니다.
@@ -257,7 +257,7 @@ public class AgentService : IAgentService
         agent.OsName = Truncate(req.OsName, 100);
         agent.OsVersion = Truncate(req.OsVersion, 100);
         agent.MacAddresses = JoinMacs(req.MacAddresses);
-        agent.IpAddress = Truncate(req.IpAddress, 100);
+        agent.IpAddress = Truncate(req.IpAddress, 64);
         agent.AgentVersion = Truncate(req.AgentVersion, 32) ?? string.Empty;
     }
 

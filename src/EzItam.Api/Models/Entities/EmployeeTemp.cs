@@ -18,7 +18,7 @@ namespace EzItam.Api.Models.Entities
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [StringLength(200)]
+        [StringLength(254)]
         public string? Email { get; set; }
 
         [StringLength(30)]
