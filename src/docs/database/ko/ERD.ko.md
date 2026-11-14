@@ -1,6 +1,6 @@
-# EZ-ITAM Entity Relationship Diagram
+# EZ-ITAM 엔터티 관계도
 
-ERD này phản ánh quan hệ được khai báo bởi EF Core migrations. `__EFMigrationsHistory` và các bảng Hangfire không có quan hệ nghiệp vụ nên không đưa vào sơ đồ. Khóa `Id` là PK; các nhãn trong quan hệ là FK.
+이 ERD는 애플리케이션 데이터베이스의 EF Core 마이그레이션에 선언된 관계를 나타낸다. `__EFMigrationsHistory`에는 업무 관계가 없으며 Hangfire는 패키지가 관리하는 별도의 SQL Server 저장소를 사용한다. Hangfire 테이블은 workbook의 `Hangfire Storage` 시트에 수록하며 이 그림에는 포함하지 않는다. `Id`는 PK, 관계의 레이블은 FK이다.
 
 ```mermaid
 erDiagram
@@ -140,4 +140,4 @@ erDiagram
     }
 ```
 
-`EmployeeTemps(OrgCode, EmployeeNo)` có unique index ghép; `InventoryDetails(InventoryId, IdAsset)` cũng là unique index ghép. Các quan hệ `LicenseAssignments.AssetId` và `EmployeeId` đều nullable theo schema hiện tại; DB chưa bắt buộc chính xác một trong hai đích được điền.
+`EmployeeTemps(OrgCode, EmployeeNo)`와 `InventoryDetails(InventoryId, IdAsset)`에는 각각 복합 고유 인덱스가 있다. `LicenseAssignments.AssetId`와 `EmployeeId`는 각각 NULL을 허용하지만, CHECK 제약 조건 `CK_LicenseAssignments_ExactlyOneAssignee`에 의해 정확히 하나만 입력해야 한다.
